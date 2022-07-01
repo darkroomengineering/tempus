@@ -1,0 +1,19 @@
+{
+  "name": "@studio-freight/tempus",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "source": "src/index.js",
+  "module": "src/index.js",
+  "type": "module",
+  "sideEffects": false,
+  "devDependencies": {
+    "vite": "^2.9.9"
+  },
+  "dependencies": {
+    "nanoid": "^4.0.0"
+  }
+}
