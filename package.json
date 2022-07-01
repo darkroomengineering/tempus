@@ -1,6 +1,6 @@
 {
   "name": "@studio-freight/tempus",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "sideEffects": false,
   "type": "module",
   "source": "src/index.js",
