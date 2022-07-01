@@ -13,10 +13,10 @@ function onFrame(time, deltaTime) {
      called every frame
 }
 
- subscribe
+// subscribe
 const id = raf.add(onFrame, 0)
 
- unsubscribe
+// unsubscribe
 raf.remove(id)
 ```
 
@@ -24,4 +24,3 @@ raf.remove(id)
 
 - `add(callback, priority)`
 - `remove(id)`
-

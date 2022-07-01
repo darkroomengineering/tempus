@@ -1,11 +1,11 @@
-import { nanoid } from "nanoid"
+import { nanoid } from 'nanoid'
 
 class Raf {
   #isClient
   #callbacks
 
   constructor() {
-    this.#isClient = typeof window !== "undefined"
+    this.#isClient = typeof window !== 'undefined'
 
     this.#callbacks = []
     this.now = this.#isClient ? performance.now() : 0

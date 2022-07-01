@@ -1,5 +1,5 @@
-import { raf } from "./src"
-import "./style.css"
+import { raf } from './src'
+import './style.css'
 
 function onFrame(time, deltaTime) {
   console.log(time)
