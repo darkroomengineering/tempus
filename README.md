@@ -10,7 +10,7 @@ $ npm i @studio-freight/tempus
 import { raf } from '@studio-freight/tempus'
 
 function onFrame(time, deltaTime) {
-     called every frame
+  // called every frame
 }
 
 // subscribe

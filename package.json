@@ -1,16 +1,24 @@
 {
   "name": "@studio-freight/tempus",
-  "version": "0.0.1",
+  "version": "0.0.4",
+  "sideEffects": false,
+  "type": "module",
+  "source": "src/index.js",
+  "exports": {
+    "require": "./dist/tempus.cjs",
+    "default": "./dist/tempus.modern.js"
+  },
+  "main": "dist/tempus.cjs",
+  "module": "dist/tempus.module.js",
+  "unpkg": "dist/tempus.umd.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "package:build": "microbundle src/index.js",
     "preview": "vite preview"
   },
-  "source": "src/index.js",
-  "module": "src/index.js",
-  "type": "module",
-  "sideEffects": false,
   "devDependencies": {
+    "microbundle": "^0.15.0",
     "vite": "^2.9.9"
   },
   "dependencies": {
