@@ -1,13 +1,13 @@
 ## Installation
 
 ```bash
-$ npm i @studio-freighttempus
+$ npm i @studio-freight/tempus
 ```
 
 ## Usage
 
 ```javascript
-import { raf } from '@studio-freighttempus'
+import { raf } from '@studio-freight/tempus'
 
 function onFrame(time, deltaTime) {
      called every frame
