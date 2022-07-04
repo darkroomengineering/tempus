@@ -1,16 +1,10 @@
 {
   "name": "@studio-freight/tempus",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "sideEffects": false,
   "type": "module",
   "source": "src/index.js",
-  "exports": {
-    "require": "./dist/tempus.cjs",
-    "default": "./dist/tempus.modern.js"
-  },
-  "main": "dist/tempus.cjs",
-  "module": "dist/tempus.module.js",
-  "unpkg": "dist/tempus.umd.js",
+  "module": "dist/tempus.esm.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
