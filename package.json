@@ -1,14 +1,12 @@
 {
   "name": "@studio-freight/tempus",
-  "version": "0.0.6",
+  "version": "0.0.9",
   "sideEffects": false,
   "type": "module",
-  "source": "src/index.js",
-  "module": "dist/tempus.esm.js",
+  "main": "src/index.mjs",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "package:build": "microbundle src/index.js",
     "preview": "vite preview"
   },
   "devDependencies": {
