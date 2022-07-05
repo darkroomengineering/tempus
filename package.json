@@ -1,16 +1,13 @@
 {
   "name": "@studio-freight/tempus",
-  "version": "0.0.13",
-  "source": "src/index.js",
-  "type": "module",
-  "main": "dist/tempus.cjs",
-  "module": "dist/tempus.module.js",
+  "version": "0.0.25",
   "sideEffects": false,
+  "type": "module",
+  "main": "src/index.mjs",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "package:build": "microbundle"
+    "preview": "vite preview"
   },
   "devDependencies": {
     "microbundle": "^0.15.0",
