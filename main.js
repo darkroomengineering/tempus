@@ -1,4 +1,4 @@
-import { raf } from './src/index.mjs'
+import { raf } from './dist/tempus.module.js'
 import './style.css'
 
 function onFrame(time, deltaTime) {
