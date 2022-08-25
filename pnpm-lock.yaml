@@ -8,9 +8,11 @@ specifiers:
   size-limit: ^8.0.1
   vite: ^3.0.9
 
+dependencies:
+  nanoid: 4.0.0
+
 devDependencies:
   '@size-limit/preset-small-lib': 8.0.1_size-limit@8.0.1
-  nanoid: 4.0.0
   path: 0.12.7
   rimraf: 3.0.2
   size-limit: 8.0.1
@@ -751,7 +753,7 @@ packages:
     resolution: {integrity: sha512-IgBP8piMxe/gf73RTQx7hmnhwz0aaEXYakvqZyE302IXW3HyVNhdNGC+O2MwMAVhLEnvXlvKtGbtJf6wvHihCg==}
     engines: {node: ^14 || ^16 || >=18}
     hasBin: true
-    dev: true
+    dev: false
 
   /nanospinner/1.1.0:
     resolution: {integrity: sha512-yFvNYMig4AthKYfHFl1sLj7B2nkHL4lzdig4osvl9/LdGbXwrdFRoqBS98gsEsOakr0yH+r5NZ/1Y9gdVB8trA==}
