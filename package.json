@@ -1,19 +1,42 @@
 {
   "name": "@studio-freight/tempus",
   "version": "0.0.25",
-  "sideEffects": false,
-  "type": "module",
-  "main": "src/index.mjs",
+  "description": "one rAF to rule them all",
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite docs",
+    "size": "size-limit",
+    "clean": "rimraf dist",
     "build": "vite build",
-    "preview": "vite preview"
+    "prebuild": "npm run clean",
+    "preversion": "npm run build",
+    "postversion": "git push --follow-tags"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/studio-freight/tempus.git"
+  },
+  "keywords": [],
+  "author": "@studio-freight",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/studio-freight/tempus/issues"
+  },
+  "homepage": "https://github.com/studio-freight/tempus#readme",
   "devDependencies": {
-    "microbundle": "^0.15.0",
-    "vite": "^2.9.9"
+    "@size-limit/preset-small-lib": "^8.0.1",
+    "nanoid": "^4.0.0",
+    "path": "^0.12.7",
+    "rimraf": "^3.0.2",
+    "size-limit": "^8.0.1",
+    "vite": "^3.0.9"
   },
-  "dependencies": {
-    "nanoid": "^4.0.0"
-  }
+  "size-limit": [
+    {
+      "limit": "2 kB",
+      "path": "dist/index.js"
+    }
+  ]
 }
