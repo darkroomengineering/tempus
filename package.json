@@ -36,7 +36,7 @@
     "size-limit": "^8.0.1",
     "vite": "^3.0.9"
   },
-  "peerDependencies": {
+  "dependencies": {
     "nanoid": "^4.0.0"
   },
   "size-limit": [
