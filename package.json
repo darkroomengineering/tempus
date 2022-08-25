@@ -1,6 +1,6 @@
 {
   "name": "@studio-freight/tempus",
-  "version": "0.0.26",
+  "version": "0.0.27",
   "description": "one rAF to rule them all",
   "files": [
     "dist"
@@ -34,6 +34,9 @@
     "rimraf": "^3.0.2",
     "size-limit": "^8.0.1",
     "vite": "^3.0.9"
+  },
+  "peerDependencies": {
+    "nanoid": "^4.0.0"
   },
   "size-limit": [
     {
