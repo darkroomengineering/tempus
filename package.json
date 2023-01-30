@@ -21,6 +21,7 @@
     "clean": "npm-run-all --parallel clean:bundled clean:dist",
     "clean:bundled": "rm -rf bundled",
     "clean:dist": "rm -rf dist",
+    "postpublish": "git push --follow-tags",
     "prepublishOnly": "npm version patch",
     "preversion": "npm run build",
     "build": "npm-run-all --parallel clean build:dist build:bundle build:types",
