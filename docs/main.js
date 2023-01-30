@@ -1,4 +1,4 @@
-import { raf } from '../dist/index.mjs'
+import { raf } from '../src/index'
 import './style.css'
 
 function onFrame(time, deltaTime) {
