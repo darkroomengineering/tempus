@@ -1,6 +1,6 @@
 {
   "name": "@studio-freight/tempus",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "description": "one rAF to rule them all",
   "files": [
     "dist/**/*",
