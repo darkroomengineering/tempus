@@ -8,13 +8,13 @@
   ],
   "sideEffects": false,
   "source": "src/index.js",
-  "main": "dist/index.js",
-  "umd:main": "dist/index.umd.js",
-  "module": "dist/index.mjs",
-  "types": "dist/types/index.d.ts",
+  "main": "dist/tempus.js",
+  "umd:main": "dist/tempus.umd.js",
+  "module": "dist/tempus.mjs",
+  "types": "dist/types/tempus.d.ts",
   "exports": {
-    "require": "./dist/index.js",
-    "default": "./dist/index.modern.mjs"
+    "require": "./dist/tempus.js",
+    "default": "./dist/tempus.modern.mjs"
   },
   "scripts": {
     "dev": "vite",
@@ -53,7 +53,7 @@
     "microbundle": "^0.15.1",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.8.3",
-    "typescript": "^4.9.4",
+    "typescript": "^4.9.5",
     "vite": "^4.0.4"
   },
   "dependencies": {
