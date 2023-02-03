@@ -1,6 +1,6 @@
 {
   "name": "@studio-freight/tempus",
-  "version": "0.0.34",
+  "version": "0.0.35",
   "description": "one rAF to rule them all",
   "files": [
     "dist/**/*",
@@ -20,8 +20,8 @@
     "dev": "npm-run-all --parallel watch vite",
     "vite": "vite",
     "clean": "npm-run-all --parallel clean:bundled clean:dist",
-    "clean:bundled": "rm -rf bundled",
-    "clean:dist": "rm -rf dist",
+    "clean:bundled": "rimraf bundled",
+    "clean:dist": "rimraf dist",
     "postpublish": "git push --follow-tags",
     "prepublishOnly": "npm version patch",
     "preversion": "npm run build",
@@ -60,7 +60,8 @@
     "vite": "^4.0.4"
   },
   "dependencies": {
-    "nanoid": "^4.0.0"
+    "nanoid": "^4.0.0",
+    "rimraf": "^4.1.2"
   },
   "size-limit": [
     {
