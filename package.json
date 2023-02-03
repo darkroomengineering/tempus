@@ -17,13 +17,15 @@
     "default": "./dist/tempus.modern.mjs"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "npm-run-all --parallel watch vite",
+    "vite": "vite",
     "clean": "npm-run-all --parallel clean:bundled clean:dist",
     "clean:bundled": "rm -rf bundled",
     "clean:dist": "rm -rf dist",
     "postpublish": "git push --follow-tags",
     "prepublishOnly": "npm version patch",
     "preversion": "npm run build",
+    "watch": "microbundle watch -i src/ --o ./dist",
     "build": "npm-run-all --parallel clean build:dist build:bundle build:types",
     "build:types": "tsc --allowJs -d --emitDeclarationOnly --declarationDir ./dist/types --removeComments ./src/index.js",
     "build:dist": "microbundle build -i src/ --o ./dist",

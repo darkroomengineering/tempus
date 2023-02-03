@@ -1,42 +1,32 @@
-import { nanoid } from 'nanoid'
-
 class Raf {
-  #isClient
-  #callbacks
-
   constructor() {
-    this.#isClient = typeof window !== 'undefined'
+    if (typeof window === 'undefined') return
 
-    this.#callbacks = []
-    this.now = this.#isClient ? performance.now() : 0
-    if (this.#isClient) {
-      requestAnimationFrame(this.#raf)
-    }
+    this.callbacks = []
+    this.now = performance.now()
+    requestAnimationFrame(this.raf)
   }
 
   add(callback, priority = 0) {
-    const id = nanoid()
+    this.callbacks.push({ callback, priority })
+    this.callbacks.sort((a, b) => a.priority - b.priority)
 
-    this.#callbacks.push({ id, callback, priority })
-    this.#callbacks.sort((a, b) => a.priority - b.priority)
-
-    return id
+    return () => this.remove(callback)
   }
 
-  remove(id) {
-    const index = this.#callbacks.findIndex((callback) => id === callback.id)
-    this.#callbacks.splice(index, 1)
+  remove(callback) {
+    this.callbacks = this.callbacks.filter(({ callback: cb }) => callback !== cb)
   }
 
-  #raf = (now) => {
-    requestAnimationFrame(this.#raf)
+  raf = (now) => {
+    requestAnimationFrame(this.raf)
 
     const deltaTime = now - this.now
     this.now = now
 
-    this.#callbacks.forEach(({ callback }) => {
-      callback(now, deltaTime)
-    })
+    for (let i = 0; i < this.callbacks.length; i++) {
+      this.callbacks[i].callback(now, deltaTime)
+    }
   }
 }
 

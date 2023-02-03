@@ -14,13 +14,14 @@ function onFrame(time, deltaTime) {
 }
 
 // subscribe
-const id = raf.add(onFrame, 0)
+const unsubscribe = raf.add(onFrame, 0)
 
 // unsubscribe
-raf.remove(id)
+unsubscribe()
+raf.remove(onFrame)
 ```
 
 ## Methods
 
 - `add(callback, priority)`
-- `remove(id)`
+- `remove(callback)`
