@@ -60,9 +60,6 @@
     "typescript": "^5.0.2",
     "vite": "^4.2.1"
   },
-  "dependencies": {
-    "nanoid": "^4.0.1"
-  },
   "size-limit": [
     {
       "limit": "2 kB",
