@@ -7,18 +7,19 @@ $ npm i @studio-freight/tempus
 ## Usage
 
 ```javascript
-import { raf } from '@studio-freight/tempus'
+import Tempus from '@studio-freight/tempus'
 
 function onFrame(time, deltaTime) {
   // called every frame
 }
 
 // subscribe
-const unsubscribe = raf.add(onFrame, 0)
+const unsubscribe = Tempus.add(onFrame, 0)
 
 // unsubscribe
 unsubscribe()
-raf.remove(onFrame)
+// OR
+Tempus.remove(onFrame)
 ```
 
 ## Methods
