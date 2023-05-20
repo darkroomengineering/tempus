@@ -3,19 +3,21 @@ const isClient = typeof window !== 'undefined'
 class Tempus {
   constructor() {
     this.callbacks = []
+    this.tempusId = 0
     this.now = performance.now()
     requestAnimationFrame(this.raf)
   }
 
   add(callback, priority = 0) {
-    this.callbacks.push({ callback, priority })
+    this.tempusId++
+    this.callbacks.push({ callback, priority, id: this.tempusId})
     this.callbacks.sort((a, b) => a.priority - b.priority)
 
-    return () => this.remove(callback)
+    return () => this.remove({callback, tempusId: this.tempusId})
   }
 
-  remove(callback) {
-    this.callbacks = this.callbacks.filter(({ callback: cb }) => callback !== cb)
+  remove({callback, tempusId}) {
+    this.callbacks = this.callbacks.filter(({ id }) =>  tempusId !== id )
   }
 
   raf = (now) => {
@@ -33,3 +35,4 @@ class Tempus {
 if (!isClient) console.warn('Tempus can be used in client side only')
 
 export default isClient && new Tempus()
+
