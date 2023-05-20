@@ -13,10 +13,10 @@ class Tempus {
     this.callbacks.push({ callback, priority, id: this.tempusId})
     this.callbacks.sort((a, b) => a.priority - b.priority)
 
-    return () => this.remove({callback, tempusId: this.tempusId})
+    return () => this.remove({tempusId: this.tempusId})
   }
 
-  remove({callback, tempusId}) {
+  remove({tempusId}) {
     this.callbacks = this.callbacks.filter(({ id }) =>  tempusId !== id )
   }
 
