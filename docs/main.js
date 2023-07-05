@@ -1,4 +1,4 @@
-import { raf } from '../dist/tempus.modern.mjs'
+import Tempus from '../dist/tempus.modern.mjs'
 import './style.css'
 
 function onFrame(time, deltaTime) {
@@ -6,4 +6,4 @@ function onFrame(time, deltaTime) {
   document.body.innerHTML = `time: ${time}<br/>delta time: ${deltaTime}`
 }
 
-raf.add(onFrame, 0)
+Tempus.add(onFrame, 0)
