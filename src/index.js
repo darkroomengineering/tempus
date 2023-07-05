@@ -1,5 +1,3 @@
-const isClient = typeof window !== 'undefined'
-
 class Tempus {
   constructor() {
     this.callbacks = []
@@ -29,7 +27,5 @@ class Tempus {
     }
   }
 }
-
-if (!isClient) console.warn('Tempus can be used in client side only')
 
 export default isClient && new Tempus()
