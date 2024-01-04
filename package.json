@@ -14,7 +14,8 @@
   "types": "dist/types/tempus.d.ts",
   "exports": {
     "require": "./dist/tempus.js",
-    "default": "./dist/tempus.modern.mjs"
+    "default": "./dist/tempus.modern.mjs",
+    "types": "./dist/types/tempus.d.ts"
   },
   "scripts": {
     "dev": "npm-run-all --parallel watch vite",
@@ -37,9 +38,12 @@
     "type": "git",
     "url": "git+https://github.com/studio-freight/tempus.git"
   },
-  "keywords": [],
+  "keywords": [
+    "raf",
+    "ticker"
+  ],
   "author": "@studio-freight",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/studio-freight/tempus/issues"
   },
