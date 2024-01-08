@@ -1,0 +1,2 @@
+var a="undefined"!=typeof window&&new class{constructor(){this.raf=a=>{requestAnimationFrame(this.raf);const t=a-this.now;this.now=a;for(let s=0;s<this.callbacks.length;s++)this.callbacks[s].callback(a,t)},this.callbacks=[],this.now=performance.now(),requestAnimationFrame(this.raf)}add(a,t=0){return this.callbacks.push({callback:a,priority:t}),this.callbacks.sort((a,t)=>a.priority-t.priority),()=>this.remove(a)}remove(a){this.callbacks=this.callbacks.filter(({callback:t})=>a!==t)}};export{a as default};
+//# sourceMappingURL=tempus.modern.mjs.map

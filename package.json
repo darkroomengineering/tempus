@@ -3,8 +3,7 @@
   "version": "0.0.40",
   "description": "one rAF to rule them all",
   "files": [
-    "dist/**/*",
-    "bundled/**/*"
+    "dist"
   ],
   "sideEffects": false,
   "source": "src/index.js",
