@@ -26,12 +26,9 @@
     "prepublishOnly": "npm version patch",
     "preversion": "npm run build",
     "watch": "microbundle watch -i src/ --o ./dist",
-    "build": "npm-run-all --parallel clean build:dist build:bundle build:types",
+    "build": "npm-run-all --parallel clean build:dist build:types",
     "build:types": "tsc --allowJs -d --emitDeclarationOnly --declarationDir ./dist/types --removeComments ./src/index.js",
-    "build:dist": "microbundle build -i src/ --o ./dist",
-    "build:bundle": "npm-run-all build:bundle-full build:bundle-min",
-    "build:bundle-full": "microbundle build -i src/ --o ./bundled/index.js --no-sourcemap --no-pkg-main --external none --name $npm_package_name --format umd  --no-compress",
-    "build:bundle-min": "microbundle build -i src/ --o ./bundled/index.min.js --no-sourcemap --no-pkg-main --external none --name $npm_package_name --format umd"
+    "build:dist": "microbundle build -i src/ --o ./dist"
   },
   "repository": {
     "type": "git",
