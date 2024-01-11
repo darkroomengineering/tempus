@@ -13,8 +13,8 @@
   "types": "dist/types/tempus.d.ts",
   "exports": {
     "require": "./dist/tempus.js",
-    "default": "./dist/tempus.modern.mjs",
-    "types": "./dist/types/tempus.d.ts"
+    "types": "./dist/types/tempus.d.ts",
+    "default": "./dist/tempus.modern.mjs"
   },
   "scripts": {
     "dev": "npm-run-all --parallel watch vite",
