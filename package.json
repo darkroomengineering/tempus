@@ -10,7 +10,7 @@
   "main": "dist/tempus.js",
   "umd:main": "dist/tempus.umd.js",
   "module": "dist/tempus.mjs",
-  "types": "dist/types/tempus.d.ts",
+  "types": "dist/types/index.d.ts",
   "exports": {
     "require": "./dist/tempus.js",
     "types": "./dist/types/index.d.ts",
