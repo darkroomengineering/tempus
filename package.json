@@ -13,7 +13,7 @@
   "types": "dist/types/tempus.d.ts",
   "exports": {
     "require": "./dist/tempus.js",
-    "types": "./dist/types/tempus.d.ts",
+    "types": "./dist/types/index.d.ts",
     "default": "./dist/tempus.modern.mjs"
   },
   "scripts": {
