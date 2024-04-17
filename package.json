@@ -1,6 +1,6 @@
 {
   "name": "@darkroom.engineering/tempus",
-  "version": "0.0.44",
+  "version": "0.0.45",
   "description": "one rAF to rule them all",
   "files": [
     "dist"
