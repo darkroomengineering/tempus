@@ -32,18 +32,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/studio-freight/tempus.git"
+    "url": "git+https://github.com/darkroomengineering/tempus.git"
   },
   "keywords": [
     "raf",
     "ticker"
   ],
-  "author": "@studio-freight",
+  "author": "darkroom.engineering",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/studio-freight/tempus/issues"
+    "url": "https://github.com/darkroomengineering/tempus/issues"
   },
-  "homepage": "https://github.com/studio-freight/tempus#readme",
+  "homepage": "https://github.com/darkroomengineering/tempus",
   "devDependencies": {
     "@size-limit/preset-small-lib": "^8.2.4",
     "eslint": "^8.36.0",
