@@ -6,7 +6,7 @@ class Framerate {
   constructor(fps = Infinity) {
     this.callbacks = []
     this.fps = fps
-    this.now = performance.now()
+    this.time = 0
     this.lastTickDate = performance.now()
   }
 
@@ -14,23 +14,23 @@ class Framerate {
     return 1000 / this.fps
   }
 
-  dispatch(now, deltaTime) {
+  dispatch(time, deltaTime) {
     for (let i = 0; i < this.callbacks.length; i++) {
-      this.callbacks[i].callback(now, deltaTime)
+      this.callbacks[i].callback(time, deltaTime)
     }
   }
 
-  raf(now, deltaTime) {
-    this.now += deltaTime
+  raf(time, deltaTime) {
+    this.time += deltaTime
 
     if (this.fps === Infinity) {
-      this.dispatch(now, deltaTime)
-    } else if (this.now >= this.executionTime) {
-      this.now = this.now % this.executionTime
-      const deltaTime = now - this.lastTickDate
-      this.lastTickDate = now
+      this.dispatch(time, deltaTime)
+    } else if (this.time >= this.executionTime) {
+      this.time = this.time % this.executionTime
+      const deltaTime = time - this.lastTickDate
+      this.lastTickDate = time
 
-      this.dispatch(now, deltaTime)
+      this.dispatch(time, deltaTime)
     }
   }
 
@@ -49,11 +49,23 @@ class Framerate {
 
 class Tempus {
   constructor() {
+    /**
+     * @private
+     */
     this.framerates = {}
-    this.now = performance.now()
+
+    /**
+     * @private
+     */
+    this.time = performance.now()
     requestAnimationFrame(this.raf)
   }
 
+  /**
+   * @param {Function} callback
+   * @param {{ priority?: number, fps?: number }} [options]
+   * @returns {Function}
+   */
   add(callback, { priority = 0, fps = Infinity } = {}) {
     if (typeof fps === 'number') {
       if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps)
@@ -62,25 +74,21 @@ class Tempus {
     }
   }
 
-  remove(uid, { fps = Infinity } = {}) {
-    if (typeof fps === 'number') {
-      this.framerates[fps].remove(uid)
-    }
-  }
-
-  raf = (now) => {
+  /**
+   * @private
+   */
+  raf = (time) => {
     requestAnimationFrame(this.raf, true)
 
-    const deltaTime = now - this.now
-    this.now = now
+    const deltaTime = time - this.time
+    this.time = time
 
     for (const framerate of Object.values(this.framerates)) {
-      framerate.raf(now, deltaTime)
+      framerate.raf(time, deltaTime)
     }
   }
 
   patch() {
-    console.log('Tempus is taking over the rAf')
     const originalRAF = window.requestAnimationFrame
     const originalCancelRAF = window.cancelAnimationFrame
 
