@@ -93,17 +93,16 @@ class Tempus {
     const originalCancelRAF = window.cancelAnimationFrame
 
     window.requestAnimationFrame = (callback, { priority = 0, fps = Infinity } = {}) => {
-      if (callback === this.raf) {
+      if (callback === this.raf || !callback.toString().includes('requestAnimationFrame(')) {
         return originalRAF(callback)
       }
 
-      if (!callback.patched) {
-        const remove = this.add(callback, { priority, fps })
-        callback.patched = true
-        callback.remove = remove
+      if (!callback.__tempusPatched) {
+        callback.__tempusPatched = true
+        callback.__tempusUnsubscribe = this.add(callback, { priority, fps })
       }
 
-      return callback.remove
+      return callback.__tempusUnsubscribe
     }
 
     window.cancelAnimationFrame = (callback) => {
