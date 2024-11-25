@@ -48,6 +48,10 @@
     "url": "https://github.com/darkroomengineering/tempus/issues"
   },
   "homepage": "https://github.com/darkroomengineering/tempus",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/darkroomengineering"
+  },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^8.2.4",
     "eslint": "^8.36.0",
