@@ -127,3 +127,7 @@ Patches the native `requestAnimationFrame` to use Tempus.
 ## License
 
 MIT © [Darkroom Engineering](https://github.com/darkroomengineering)
+
+# Shoutout
+
+Thank you to [Keith Cirkel](https://github.com/keithamus) for having transfered us the npm package name 🙏.
