@@ -2,6 +2,9 @@
 
 import { getUID } from './uid'
 
+const originalRAF = window.requestAnimationFrame
+const originalCancelRAF = window.cancelAnimationFrame
+
 class Framerate {
   constructor(fps = Infinity) {
     this.callbacks = []
@@ -35,6 +38,8 @@ class Framerate {
   }
 
   add({ callback, priority }) {
+    if (typeof callback !== 'function') console.error('Tempus.add: callback is not a function')
+
     const uid = getUID()
     this.callbacks.push({ callback, priority, uid })
     this.callbacks.sort((a, b) => a.priority - b.priority)
@@ -89,9 +94,6 @@ class Tempus {
   }
 
   patch() {
-    const originalRAF = window.requestAnimationFrame
-    const originalCancelRAF = window.cancelAnimationFrame
-
     window.requestAnimationFrame = (callback, { priority = 0, fps = Infinity } = {}) => {
       if (callback === this.raf || !callback.toString().includes('requestAnimationFrame(')) {
         return originalRAF(callback)
@@ -110,6 +112,11 @@ class Tempus {
 
       return originalCancelRAF(callback)
     }
+  }
+
+  unpatch() {
+    window.requestAnimationFrame = originalRAF
+    window.cancelAnimationFrame = originalCancelRAF
   }
 }
 

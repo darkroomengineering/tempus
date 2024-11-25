@@ -23,4 +23,5 @@ declare class Tempus {
      */
     private raf;
     patch(): void;
+    unpatch(): void;
 }

@@ -1,6 +1,6 @@
 {
-  "name": "@darkroom.engineering/tempus",
-  "version": "0.0.46",
+  "name": "tempus",
+  "version": "1.0.0-dev.0",
   "description": "one rAF to rule them all",
   "files": [
     "dist"
@@ -18,17 +18,21 @@
   },
   "scripts": {
     "dev": "npm-run-all --parallel watch vite",
+    "watch": "microbundle watch -i src/ --o ./dist",
     "vite": "vite",
     "clean": "npm-run-all --parallel clean:bundled clean:dist",
     "clean:bundled": "rimraf bundled",
     "clean:dist": "rimraf dist",
-    "postpublish": "git push --follow-tags",
-    "prepublishOnly": "npm version patch",
-    "preversion": "npm run build",
-    "watch": "microbundle watch -i src/ --o ./dist",
     "build": "npm-run-all --parallel clean build:dist build:types",
     "build:types": "tsc --allowJs -d --emitDeclarationOnly --declarationDir ./dist/types --removeComments ./src/index.js",
-    "build:dist": "microbundle build -i src/ --o ./dist"
+    "build:dist": "microbundle build -i src/ --o ./dist",
+    "version:dev": "npm version prerelease --preid dev --force --no-git-tag-version",
+    "version:patch": "npm version patch --force --no-git-tag-version",
+    "version:minor": "npm version minor --force --no-git-tag-version",
+    "version:major": "npm version major --force --no-git-tag-version",
+    "postversion": "pnpm build && pnpm readme",
+    "publish:main": "npm publish",
+    "publish:dev": "npm publish --tag dev"
   },
   "repository": {
     "type": "git",
