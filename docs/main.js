@@ -18,13 +18,14 @@ function onFrame(time, deltaTime) {
 }
 
 // const unsubscribe = Tempus.add(onFrame, { priority: 0 }) // max FPS, will executed before priority: 1
-// // Tempus.add(onFrame, { priority: 1 }) // max FPS, will executed after priority: 0
-// // Tempus.add(onFrame, { priority: 0, fps: 30 }) // 30 FPS, (e.g. playing frame sequence)
+// const unsubscribe = Tempus.add(onFrame, { priority: 1 }) // max FPS, will executed after priority: 0
+// Tempus.add(onFrame, { priority: 0, fps: 30 }) // 30 FPS, (e.g. playing frame sequence)
 
 rAFID = requestAnimationFrame(onFrame)
 
 setTimeout(() => {
-  console.log(rAFID)
+  // unsubscribe()
+  // console.log(rAFID)
   cancelAnimationFrame(rAFID) // be sure to cancel the rAF
 }, 5000)
 

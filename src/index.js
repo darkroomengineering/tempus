@@ -108,7 +108,10 @@ class Tempus {
     }
 
     window.cancelAnimationFrame = (callback) => {
-      if (typeof callback === 'function') callback?.()
+      if (typeof callback === 'function') {
+        callback?.()
+        return
+      }
 
       return originalCancelRAF(callback)
     }
