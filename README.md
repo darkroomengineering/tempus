@@ -15,8 +15,20 @@ A lightweight, high-performance animation frame manager for JavaScript applicati
 
 ## Installation
 
+using package manager
+
 ```bash
 npm install tempus
+```
+
+```js
+import Tempus from 'tempus'
+```
+
+using script tag
+
+```html
+<script src="https://unpkg.com/tempus@1.0.0/dist/tempus.min.js"></script> 
 ```
 
 ## Basic Usage
