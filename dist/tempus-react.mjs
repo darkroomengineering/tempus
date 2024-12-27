@@ -8,6 +8,7 @@ function useTempus(callback, options) {
     return Tempus.add(callback, options);
   }, []);
 }
+useTempus.patch = Tempus.patch;
 export {
   useTempus
 };

@@ -37,19 +37,22 @@ using script tag
 import Tempus from "tempus"
 
 // Simple animation at maximum FPS
-const animate = (time, deltaTime) => {
-  // Animation code here
+function animate(time, deltaTime) {
+  console.log('frame', time, deltaTime)
 }
 
 Tempus.add(animate)
 ```
+
+### React
+
+See [tempus/react](./packages/react/README.md)
 
 ### Cleanup
 ```javascript
 const unsubscribe = Tempus.add(animate)
 
 unsubscribe()
-
 ```
 
 ## Advanced Usage
@@ -77,12 +80,7 @@ Tempus.add(secondaryAnimation)
 ```javascript
 // Patch native requestAnimationFrame across all your app
 Tempus.patch()
-
-// Now regular requestAnimationFrame calls will use Tempus
-requestAnimationFrame(animate, { 
-  priority: 0,
-  fps: 60 
-})
+// Now any requestAnimationFrame recursive calls will use Tempus
 ```
 
 ## Integration Examples
@@ -105,7 +103,7 @@ Tempus.add((time) => {
 
 ### With Three.js
 ```javascript
-Tempus.add((time) => {
+Tempus.add(() => {
   renderer.render(scene, camera)
 }, { priority: 1 })
 // the render will happen after other rafs
