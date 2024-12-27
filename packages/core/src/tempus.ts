@@ -1,11 +1,17 @@
 // Infinity = max FPS (system default)
 
+import type { TempusCallback, TempusOptions, UID } from './types'
 import { getUID } from './uid'
 
 const originalRAF = window.requestAnimationFrame
 const originalCancelRAF = window.cancelAnimationFrame
 
 class Framerate {
+  callbacks: { callback: TempusCallback; priority: number; uid: UID }[]
+  fps: number
+  time: number
+  lastTickDate: number
+
   constructor(fps = Infinity) {
     this.callbacks = []
     this.fps = fps
@@ -17,13 +23,13 @@ class Framerate {
     return 1000 / this.fps
   }
 
-  dispatch(time, deltaTime) {
+  dispatch(time: number, deltaTime: number) {
     for (let i = 0; i < this.callbacks.length; i++) {
-      this.callbacks[i].callback(time, deltaTime)
+      this.callbacks[i]?.callback(time, deltaTime)
     }
   }
 
-  raf(time, deltaTime) {
+  raf(time: number, deltaTime: number) {
     this.time += deltaTime
 
     if (this.fps === Infinity) {
@@ -37,7 +43,7 @@ class Framerate {
     }
   }
 
-  add({ callback, priority }) {
+  add({ callback, priority }: { callback: TempusCallback; priority: number }) {
     if (typeof callback !== 'function') console.error('Tempus.add: callback is not a function')
 
     const uid = getUID()
@@ -47,31 +53,23 @@ class Framerate {
     return () => this.remove(uid)
   }
 
-  remove(uid) {
+  remove(uid: UID) {
     this.callbacks = this.callbacks.filter(({ uid: u }) => uid !== u)
   }
 }
 
 class Tempus {
+  private framerates: Record<number, Framerate>
+  time: number
+
   constructor() {
-    /**
-     * @private
-     */
     this.framerates = {}
 
-    /**
-     * @private
-     */
     this.time = performance.now()
     requestAnimationFrame(this.raf)
   }
 
-  /**
-   * @param {Function} callback
-   * @param {{ priority?: number, fps?: number }} [options]
-   * @returns {Function}
-   */
-  add(callback, { priority = 0, fps = Infinity } = {}) {
+  add(callback: TempusCallback, { priority = 0, fps = Infinity }: TempusOptions = {}) {
     if (typeof fps === 'number') {
       if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps)
 
@@ -79,10 +77,8 @@ class Tempus {
     }
   }
 
-  /**
-   * @private
-   */
-  raf = (time) => {
+  private raf = (time: number) => {
+    // @ts-ignore
     requestAnimationFrame(this.raf, true)
 
     const deltaTime = time - this.time
@@ -99,15 +95,19 @@ class Tempus {
         return originalRAF(callback)
       }
 
+      // @ts-ignore
       if (!callback.__tempusPatched) {
+        // @ts-ignore
         callback.__tempusPatched = true
+        // @ts-ignore
         callback.__tempusUnsubscribe = this.add(callback, { priority, fps })
       }
 
+      // @ts-ignore
       return callback.__tempusUnsubscribe
     }
 
-    window.cancelAnimationFrame = (callback) => {
+    window.cancelAnimationFrame = (callback: number | (() => void)) => {
       if (typeof callback === 'function') {
         callback?.()
         return
@@ -125,4 +125,6 @@ class Tempus {
 
 const isClient = typeof window !== 'undefined'
 
-export default isClient && new Tempus()
+const tempus = isClient && new Tempus()
+
+export default tempus as Tempus

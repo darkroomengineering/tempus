@@ -1,0 +1,10 @@
+---
+import App from '~/react/app'
+import '~/react/style.css'
+import Layout from '../layouts/Layout.astro'
+import pkg from '../../../packages/core/package.json'
+---
+
+<Layout title={`${pkg.name} + React`}>
+  <App client:only="react" />
+</Layout>

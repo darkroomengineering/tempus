@@ -1,0 +1,11 @@
+{
+  "name": "tempus-react",
+  "type": "module",
+  "dependencies": {
+    "tempus": "workspace:tempus*"
+  },
+  "devDependencies": {
+    "react": "^18.2.0",
+    "@types/react": "^18.2.77"
+  }
+}

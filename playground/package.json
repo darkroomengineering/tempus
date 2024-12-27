@@ -1,0 +1,24 @@
+{
+  "name": "playground",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev --host",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.3",
+    "@astrojs/react": "^3.6.2",
+    "@types/react": "^18.3.4",
+    "@types/react-dom": "^18.3.0",
+    "astro": "^4.16.1",
+    "tempus": "workspace:*",
+    "lorem-ipsum": "^2.0.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.5.4"
+  }
+}

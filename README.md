@@ -22,7 +22,7 @@ npm install tempus
 ## Basic Usage
 
 ```javascript
-import Tempus from tempus
+import Tempus from "tempus"
 
 // Simple animation at maximum FPS
 const animate = (time, deltaTime) => {
@@ -45,7 +45,6 @@ unsubscribe()
 ### Custom Frame Rates
 
 ```javascript
-// Run at specific FPS
 Tempus.add(animate, { 
   fps: 30 // Will run at 30 FPS
 })
@@ -64,7 +63,7 @@ Tempus.add(secondaryAnimation)
 ### Global RAF Patching
 
 ```javascript
-// Patch native requestAnimationFrame
+// Patch native requestAnimationFrame across all your app
 Tempus.patch()
 
 // Now regular requestAnimationFrame calls will use Tempus
@@ -78,9 +77,7 @@ requestAnimationFrame(animate, {
 
 ### With Lenis Smooth Scroll
 ```javascript
-Tempus.add((time) => {
-  lenis.raf(time)
-})
+Tempus.add(lenis.raf)
 ```
 
 ### With GSAP
@@ -99,6 +96,8 @@ Tempus.add((time) => {
 Tempus.add((time) => {
   renderer.render(scene, camera)
 }, { priority: 1 })
+// the render will happen after other rafs
+// so it can be synched with lenis for instance
 ```
 
 ## API Reference
@@ -121,8 +120,7 @@ Patches the native `requestAnimationFrame` to use Tempus.
 
 - Use priorities wisely: critical animations (like scroll) should have higher priority
 - Clean up animations when they're no longer needed
-- Consider using specific FPS for non-critical animations to improve performance
-- Always handle cleanup in component unmount/destroy methods
+- Consider using specific FPS for non-critical animations to improve performance (e.g: collisions)
 
 ## License
 

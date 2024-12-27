@@ -1,31 +1,32 @@
 {
   "name": "tempus",
-  "version": "1.0.0-dev.0",
+  "version": "1.0.0-dev.1",
   "description": "one rAF to rule them all",
-  "files": [
-    "dist"
-  ],
+  "type": "module",
   "sideEffects": false,
-  "source": "src/index.js",
-  "main": "dist/tempus.js",
-  "umd:main": "dist/tempus.umd.js",
-  "module": "dist/tempus.mjs",
-  "types": "dist/types/index.d.ts",
+  "unpkg": "./dist/tempus.mjs",
+  "main": "./dist/tempus.mjs",
+  "module": "./dist/tempus.mjs",
+  "types": "./dist/tempus.d.ts",
   "exports": {
-    "require": "./dist/tempus.js",
-    "types": "./dist/types/index.d.ts",
-    "default": "./dist/tempus.modern.mjs"
+    ".": {
+      "types": "./dist/tempus.d.ts",
+      "default": "./dist/tempus.mjs"
+    },
+    "./react": {
+      "types": "./dist/tempus-react.d.ts",
+      "default": "./dist/tempus-react.mjs"
+    },
+    "./dist/*": "./dist/*"
   },
   "scripts": {
-    "dev": "npm-run-all --parallel watch vite",
-    "watch": "microbundle watch -i src/ --o ./dist",
-    "vite": "vite",
-    "clean": "npm-run-all --parallel clean:bundled clean:dist",
-    "clean:bundled": "rimraf bundled",
-    "clean:dist": "rimraf dist",
-    "build": "npm-run-all --parallel clean build:dist build:types",
-    "build:types": "tsc --allowJs -d --emitDeclarationOnly --declarationDir ./dist/types --removeComments ./src/index.js",
-    "build:dist": "microbundle build -i src/ --o ./dist",
+    "build": "pnpm build:core && pnpm build:all",
+    "build:core": "tsup --config tsup.core.ts",
+    "build:all": "tsup",
+    "dev": "pnpm run -w --parallel /^dev:.*/",
+    "dev:build": "tsup --watch",
+    "dev:playground": "pnpm --filter playground dev",
+    "readme": "node ./scripts/update-readme.js",
     "version:dev": "npm version prerelease --preid dev --force --no-git-tag-version",
     "version:patch": "npm version patch --force --no-git-tag-version",
     "version:minor": "npm version minor --force --no-git-tag-version",
@@ -34,13 +35,18 @@
     "publish:main": "npm publish",
     "publish:dev": "npm publish --tag dev"
   },
+  "files": [
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/darkroomengineering/tempus.git"
   },
   "keywords": [
     "raf",
-    "ticker"
+    "ticker",
+    "framerate",
+    "fps"
   ],
   "author": "darkroom.engineering",
   "license": "MIT",
@@ -53,20 +59,16 @@
     "url": "https://github.com/sponsors/darkroomengineering"
   },
   "devDependencies": {
-    "@size-limit/preset-small-lib": "^8.2.4",
-    "eslint": "^8.36.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-n": "^15.6.1",
-    "eslint-plugin-promise": "^6.1.1",
-    "eslint-plugin-react": "^7.32.2",
-    "microbundle": "^0.15.1",
-    "npm-run-all": "^4.1.5",
-    "prettier": "^2.8.6",
-    "rimraf": "^4.4.0",
-    "typescript": "^5.0.2",
-    "vite": "^4.2.1"
+    "tsup": "^8.2.4",
+    "typescript": "^5.4.5"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "size-limit": [
     {

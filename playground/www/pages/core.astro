@@ -1,0 +1,18 @@
+---
+import '~/core/style.css'
+import Layout from '../layouts/Layout.astro'
+import pkg from '../../../packages/core/package.json'
+---
+
+<Layout title={`${pkg.name}`}>
+  <div id="debug"></div>
+  <div id="app"></div>
+  <script src="../../core/test.ts"></script>
+  <!-- THESE ARE HERE TO TEST THE BROWSER VERSION BUNDLE -->
+  <!-- <script is:raw src="../../node_modules/tempus/dist/tempus.min.js"></script> -->
+  <!-- <script is:raw src="../../core/browser.js"></script> -->
+  <!-- <script>
+		import { LoremIpsum } from 'lorem-ipsum'
+		document.querySelector('#app').innerHTML = new LoremIpsum().generateParagraphs(30)
+	</script> -->
+</Layout>
