@@ -1,6 +1,6 @@
 {
   "name": "tempus",
-  "version": "1.0.0-dev.1",
+  "version": "1.0.0-dev.2",
   "description": "one rAF to rule them all",
   "type": "module",
   "sideEffects": false,

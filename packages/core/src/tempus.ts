@@ -3,8 +3,10 @@
 import type { TempusCallback, TempusOptions, UID } from './types'
 import { getUID } from './uid'
 
-const originalRAF = window.requestAnimationFrame
-const originalCancelRAF = window.cancelAnimationFrame
+const isClient = typeof window !== 'undefined'
+
+let originalRAF = (isClient && window.requestAnimationFrame) as typeof window.requestAnimationFrame
+let originalCancelRAF = (isClient && window.cancelAnimationFrame) as typeof window.cancelAnimationFrame
 
 class Framerate {
   callbacks: { callback: TempusCallback; priority: number; uid: UID }[]
@@ -64,8 +66,8 @@ class Tempus {
 
   constructor() {
     this.framerates = {}
-
     this.time = performance.now()
+
     requestAnimationFrame(this.raf)
   }
 
@@ -123,8 +125,6 @@ class Tempus {
   }
 }
 
-const isClient = typeof window !== 'undefined'
+const TempusInstance = isClient && new Tempus()
 
-const tempus = isClient && new Tempus()
-
-export default tempus as Tempus
+export default TempusInstance as Tempus
