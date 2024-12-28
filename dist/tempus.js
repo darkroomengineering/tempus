@@ -5,8 +5,9 @@ function getUID() {
 }
 
 // packages/core/src/tempus.ts
-var originalRAF = window.requestAnimationFrame;
-var originalCancelRAF = window.cancelAnimationFrame;
+var isClient = typeof window !== "undefined";
+var originalRAF = isClient && window.requestAnimationFrame;
+var originalCancelRAF = isClient && window.cancelAnimationFrame;
 var Framerate = class {
   callbacks;
   fps;
@@ -94,9 +95,8 @@ var Tempus = class {
     window.cancelAnimationFrame = originalCancelRAF;
   }
 };
-var isClient = typeof window !== "undefined";
-var tempus = isClient && new Tempus();
-var tempus_default = tempus;
+var TempusInstance = isClient && new Tempus();
+var tempus_default = TempusInstance;
 
 // packages/core/browser.ts
 globalThis.Tempus = tempus_default;

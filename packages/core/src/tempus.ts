@@ -125,6 +125,6 @@ class Tempus {
   }
 }
 
-const TempusInstance = isClient && new Tempus()
+const TempusInstance = isClient ? new Tempus() : undefined
 
 export default TempusInstance as Tempus
