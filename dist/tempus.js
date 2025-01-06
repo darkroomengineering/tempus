@@ -50,7 +50,7 @@ var Framerate = class {
     this.callbacks = this.callbacks.filter(({ uid: u }) => uid !== u);
   }
 };
-var Tempus = class {
+var TempusImpl = class {
   framerates;
   time;
   constructor() {
@@ -101,9 +101,8 @@ var Tempus = class {
     window.cancelAnimationFrame = originalCancelRAF;
   }
 };
-var TempusInstance = new Tempus();
-var tempus_default = TempusInstance;
+var Tempus = new TempusImpl();
 
 // packages/core/browser.ts
-globalThis.Tempus = tempus_default;
+globalThis.Tempus = Tempus;
 //# sourceMappingURL=tempus.js.map

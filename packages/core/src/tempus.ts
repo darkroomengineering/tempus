@@ -63,7 +63,7 @@ class Framerate {
   }
 }
 
-class Tempus {
+class TempusImpl {
   private framerates: Record<number, Framerate>
   time: number
 
@@ -147,7 +147,6 @@ class Tempus {
   }
 }
 
-const TempusInstance = new Tempus()
+const Tempus = new TempusImpl()
 
-export default TempusInstance as Tempus
-export type { Tempus }
+export { Tempus }

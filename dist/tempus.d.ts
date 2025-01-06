@@ -5,7 +5,7 @@ type TempusOptions = {
 };
 type UID = number;
 
-declare class Tempus {
+declare class TempusImpl {
     private framerates;
     time: number;
     constructor();
@@ -14,6 +14,6 @@ declare class Tempus {
     patch(): void;
     unpatch(): void;
 }
-declare const _default: Tempus;
+declare const Tempus: TempusImpl;
 
-export { Tempus, type TempusCallback, type TempusOptions, type UID, _default as default };
+export { type TempusCallback, type TempusOptions, type UID, Tempus as default };
