@@ -4,6 +4,11 @@
 
 A lightweight, high-performance animation frame manager for JavaScript applications.
 
+## Packages
+
+- [tempus](./README.md)
+- [tempus/react](./packages/react/README.md)
+
 ## Features
 
 - 🚀 Merge multiple requestAnimationFrame loops for better performance
@@ -44,16 +49,16 @@ function animate(time, deltaTime) {
 Tempus.add(animate)
 ```
 
-### React
-
-See [tempus/react](./packages/react/README.md)
-
 ### Cleanup
 ```javascript
 const unsubscribe = Tempus.add(animate)
 
 unsubscribe()
 ```
+
+### React
+
+See [tempus/react](./packages/react/README.md)
 
 ## Advanced Usage
 
