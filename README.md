@@ -28,7 +28,7 @@ import Tempus from 'tempus'
 using script tag
 
 ```html
-<script src="https://unpkg.com/tempus@1.0.0/dist/tempus.min.js"></script> 
+<script src="https://unpkg.com/tempus@1.0.0-dev.9/dist/tempus.min.js"></script> 
 ```
 
 ## Basic Usage
