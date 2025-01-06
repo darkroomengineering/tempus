@@ -16,4 +16,4 @@ declare class Tempus {
 }
 declare const _default: Tempus;
 
-export { type TempusCallback, type TempusOptions, type UID, _default as default };
+export { Tempus, type TempusCallback, type TempusOptions, type UID, _default as default };

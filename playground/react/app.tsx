@@ -19,16 +19,11 @@ export default function App() {
     [count]
   )
 
+  useTempus((time, deltaTime) => {
+    console.log(count, time, deltaTime)
+  })
+
   // useTempus((time, deltaTime) => {
   //   console.log('frame')
   // })
-
-  useTempus(
-    (time: number, deltaTime: number) => {
-      console.log(count, time, deltaTime)
-    },
-    {
-      fps: 10,
-    }
-  )
 }

@@ -1,6 +1,6 @@
 {
   "name": "tempus",
-  "version": "1.0.0-dev.5",
+  "version": "1.0.0-dev.6",
   "description": "one rAF to rule them all",
   "type": "module",
   "sideEffects": false,
@@ -70,11 +70,5 @@
     "react": {
       "optional": true
     }
-  },
-  "size-limit": [
-    {
-      "limit": "2 kB",
-      "path": "dist/index.js"
-    }
-  ]
+  }
 }

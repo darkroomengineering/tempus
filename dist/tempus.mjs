@@ -39,7 +39,8 @@ var Framerate = class {
     }
   }
   add({ callback, priority }) {
-    if (typeof callback !== "function") console.error("Tempus.add: callback is not a function");
+    if (typeof callback !== "function")
+      console.error("Tempus.add: callback is not a function");
     const uid = getUID();
     this.callbacks.push({ callback, priority, uid });
     this.callbacks.sort((a, b) => a.priority - b.priority);
@@ -54,16 +55,19 @@ var Tempus = class {
   time;
   constructor() {
     this.framerates = {};
-    this.time = performance.now();
+    this.time = isClient ? performance.now() : 0;
+    if (!isClient) return;
     requestAnimationFrame(this.raf);
   }
   add(callback, { priority = 0, fps = Number.POSITIVE_INFINITY } = {}) {
+    if (!isClient) return;
     if (typeof fps === "number") {
       if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps);
       return this.framerates[fps].add({ callback, priority });
     }
   }
   raf = (time) => {
+    if (!isClient) return;
     requestAnimationFrame(this.raf, true);
     const deltaTime = time - this.time;
     this.time = time;
@@ -72,6 +76,7 @@ var Tempus = class {
     }
   };
   patch() {
+    if (!isClient) return;
     window.requestAnimationFrame = (callback, { priority = 0, fps = Number.POSITIVE_INFINITY } = {}) => {
       if (callback === this.raf || !callback.toString().includes("requestAnimationFrame(")) {
         return originalRAF(callback);
@@ -91,16 +96,14 @@ var Tempus = class {
     };
   }
   unpatch() {
+    if (!isClient) return;
     window.requestAnimationFrame = originalRAF;
     window.cancelAnimationFrame = originalCancelRAF;
   }
 };
-var TempusInstance = isClient ? new Tempus() : void 0;
+var TempusInstance = new Tempus();
 var tempus_default = TempusInstance;
-
-// packages/core/index.ts
-var core_default = tempus_default;
 export {
-  core_default as default
+  tempus_default as default
 };
 //# sourceMappingURL=tempus.mjs.map

@@ -5,8 +5,10 @@ import { getUID } from './uid'
 
 const isClient = typeof window !== 'undefined'
 
-const originalRAF = (isClient && window.requestAnimationFrame) as typeof window.requestAnimationFrame
-const originalCancelRAF = (isClient && window.cancelAnimationFrame) as typeof window.cancelAnimationFrame
+const originalRAF = (isClient &&
+  window.requestAnimationFrame) as typeof window.requestAnimationFrame
+const originalCancelRAF = (isClient &&
+  window.cancelAnimationFrame) as typeof window.cancelAnimationFrame
 
 class Framerate {
   callbacks: { callback: TempusCallback; priority: number; uid: UID }[]
@@ -46,7 +48,8 @@ class Framerate {
   }
 
   add({ callback, priority }: { callback: TempusCallback; priority: number }) {
-    if (typeof callback !== 'function') console.error('Tempus.add: callback is not a function')
+    if (typeof callback !== 'function')
+      console.error('Tempus.add: callback is not a function')
 
     const uid = getUID()
     this.callbacks.push({ callback, priority, uid })
@@ -66,12 +69,19 @@ class Tempus {
 
   constructor() {
     this.framerates = {}
-    this.time = performance.now()
+    this.time = isClient ? performance.now() : 0
+
+    if (!isClient) return
 
     requestAnimationFrame(this.raf)
   }
 
-  add(callback: TempusCallback, { priority = 0, fps = Number.POSITIVE_INFINITY }: TempusOptions = {}) {
+  add(
+    callback: TempusCallback,
+    { priority = 0, fps = Number.POSITIVE_INFINITY }: TempusOptions = {}
+  ) {
+    if (!isClient) return
+
     if (typeof fps === 'number') {
       if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps)
 
@@ -80,6 +90,8 @@ class Tempus {
   }
 
   private raf = (time: number) => {
+    if (!isClient) return
+
     // @ts-ignore
     requestAnimationFrame(this.raf, true)
 
@@ -92,8 +104,16 @@ class Tempus {
   }
 
   patch() {
-    window.requestAnimationFrame = (callback, { priority = 0, fps = Number.POSITIVE_INFINITY } = {}) => {
-      if (callback === this.raf || !callback.toString().includes('requestAnimationFrame(')) {
+    if (!isClient) return
+
+    window.requestAnimationFrame = (
+      callback,
+      { priority = 0, fps = Number.POSITIVE_INFINITY } = {}
+    ) => {
+      if (
+        callback === this.raf ||
+        !callback.toString().includes('requestAnimationFrame(')
+      ) {
         return originalRAF(callback)
       }
 
@@ -120,11 +140,14 @@ class Tempus {
   }
 
   unpatch() {
+    if (!isClient) return
+
     window.requestAnimationFrame = originalRAF
     window.cancelAnimationFrame = originalCancelRAF
   }
 }
 
-const TempusInstance = isClient ? new Tempus() : undefined
+const TempusInstance = new Tempus()
 
 export default TempusInstance as Tempus
+export type { Tempus }
