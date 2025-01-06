@@ -17,7 +17,7 @@ function makeBuildOptions(
     cjsInterop: false,
     dts: true,
     sourcemap: true,
-    external: ['react', 'vue', 'tempus'],
+    external: ['react', 'tempus'],
     outExtension: () => (format === 'esm' ? { js: '.mjs', dts: '.d.ts' } : { js: '.js' }),
     ...overwrites,
   } satisfies Options

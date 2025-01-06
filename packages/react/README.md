@@ -24,5 +24,7 @@ useTempus(() => {}, {
 ## Patching requestAnimationFrame
 
 ```js
-useTempus.patch()
+import { ReactTempus } from 'tempus/react'
+
+<ReactTempus patch />
 ```

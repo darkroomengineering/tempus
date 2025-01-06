@@ -5,7 +5,7 @@ import { useLayoutEffect } from 'react'
 
 export function ReactTempus({ patch = true }: { patch?: boolean }) {
   useLayoutEffect(() => {
-    if (!patch) return
+    if (!Tempus || !patch) return
 
     Tempus.patch()
 

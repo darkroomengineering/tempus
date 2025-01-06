@@ -13,7 +13,7 @@ var Framerate = class {
   fps;
   time;
   lastTickDate;
-  constructor(fps = Infinity) {
+  constructor(fps = Number.POSITIVE_INFINITY) {
     this.callbacks = [];
     this.fps = fps;
     this.time = 0;
@@ -29,7 +29,7 @@ var Framerate = class {
   }
   raf(time, deltaTime) {
     this.time += deltaTime;
-    if (this.fps === Infinity) {
+    if (this.fps === Number.POSITIVE_INFINITY) {
       this.dispatch(time, deltaTime);
     } else if (this.time >= this.executionTime) {
       this.time = this.time % this.executionTime;
@@ -57,7 +57,7 @@ var Tempus = class {
     this.time = performance.now();
     requestAnimationFrame(this.raf);
   }
-  add(callback, { priority = 0, fps = Infinity } = {}) {
+  add(callback, { priority = 0, fps = Number.POSITIVE_INFINITY } = {}) {
     if (typeof fps === "number") {
       if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps);
       return this.framerates[fps].add({ callback, priority });
@@ -72,7 +72,7 @@ var Tempus = class {
     }
   };
   patch() {
-    window.requestAnimationFrame = (callback, { priority = 0, fps = Infinity } = {}) => {
+    window.requestAnimationFrame = (callback, { priority = 0, fps = Number.POSITIVE_INFINITY } = {}) => {
       if (callback === this.raf || !callback.toString().includes("requestAnimationFrame(")) {
         return originalRAF(callback);
       }
@@ -95,7 +95,7 @@ var Tempus = class {
     window.cancelAnimationFrame = originalCancelRAF;
   }
 };
-var TempusInstance = isClient && new Tempus();
+var TempusInstance = isClient ? new Tempus() : void 0;
 var tempus_default = TempusInstance;
 
 // packages/core/index.ts

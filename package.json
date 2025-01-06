@@ -1,6 +1,6 @@
 {
   "name": "tempus",
-  "version": "1.0.0-dev.3",
+  "version": "1.0.0-dev.5",
   "description": "one rAF to rule them all",
   "type": "module",
   "sideEffects": false,
@@ -59,6 +59,7 @@
     "url": "https://github.com/sponsors/darkroomengineering"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "tsup": "^8.2.4",
     "typescript": "^5.4.5"
   },

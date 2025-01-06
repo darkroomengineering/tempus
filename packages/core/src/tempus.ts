@@ -5,8 +5,8 @@ import { getUID } from './uid'
 
 const isClient = typeof window !== 'undefined'
 
-let originalRAF = (isClient && window.requestAnimationFrame) as typeof window.requestAnimationFrame
-let originalCancelRAF = (isClient && window.cancelAnimationFrame) as typeof window.cancelAnimationFrame
+const originalRAF = (isClient && window.requestAnimationFrame) as typeof window.requestAnimationFrame
+const originalCancelRAF = (isClient && window.cancelAnimationFrame) as typeof window.cancelAnimationFrame
 
 class Framerate {
   callbacks: { callback: TempusCallback; priority: number; uid: UID }[]
@@ -14,7 +14,7 @@ class Framerate {
   time: number
   lastTickDate: number
 
-  constructor(fps = Infinity) {
+  constructor(fps = Number.POSITIVE_INFINITY) {
     this.callbacks = []
     this.fps = fps
     this.time = 0
@@ -34,7 +34,7 @@ class Framerate {
   raf(time: number, deltaTime: number) {
     this.time += deltaTime
 
-    if (this.fps === Infinity) {
+    if (this.fps === Number.POSITIVE_INFINITY) {
       this.dispatch(time, deltaTime)
     } else if (this.time >= this.executionTime) {
       this.time = this.time % this.executionTime
@@ -71,7 +71,7 @@ class Tempus {
     requestAnimationFrame(this.raf)
   }
 
-  add(callback: TempusCallback, { priority = 0, fps = Infinity }: TempusOptions = {}) {
+  add(callback: TempusCallback, { priority = 0, fps = Number.POSITIVE_INFINITY }: TempusOptions = {}) {
     if (typeof fps === 'number') {
       if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps)
 
@@ -92,7 +92,7 @@ class Tempus {
   }
 
   patch() {
-    window.requestAnimationFrame = (callback, { priority = 0, fps = Infinity } = {}) => {
+    window.requestAnimationFrame = (callback, { priority = 0, fps = Number.POSITIVE_INFINITY } = {}) => {
       if (callback === this.raf || !callback.toString().includes('requestAnimationFrame(')) {
         return originalRAF(callback)
       }
