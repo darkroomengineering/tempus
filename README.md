@@ -2,7 +2,9 @@
 
 [![TEMPUS](https://assets.darkroom.engineering/tempus/header.png)](https://github.com/darkroomengineering/tempus)
 
-A lightweight, high-performance animation frame manager for JavaScript applications.
+## Introduction
+
+`tempus` means time in Latin, this package is a lightweight, high-performance animation frame manager for JavaScript applications.
 
 ## Packages
 
@@ -139,7 +141,7 @@ Patches the native `requestAnimationFrame` to use Tempus.
 
 ## License
 
-MIT © [Darkroom Engineering](https://github.com/darkroomengineering)
+MIT © [darkroom.engineering](https://github.com/darkroomengineering)
 
 # Shoutout
 
