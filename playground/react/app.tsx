@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTempus } from 'tempus/react'
+import Tempus from 'tempus'
 
 export default function App() {
   const [count, setCount] = useState(0)

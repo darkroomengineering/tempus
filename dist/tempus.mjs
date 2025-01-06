@@ -103,7 +103,10 @@ var Tempus = class {
 };
 var TempusInstance = new Tempus();
 var tempus_default = TempusInstance;
+
+// packages/core/index.ts
+var core_default = tempus_default;
 export {
-  tempus_default as default
+  core_default as default
 };
 //# sourceMappingURL=tempus.mjs.map
