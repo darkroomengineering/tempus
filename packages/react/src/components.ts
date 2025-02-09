@@ -11,4 +11,6 @@ export function ReactTempus({ patch = true }: { patch?: boolean }) {
 
     return () => Tempus.unpatch()
   }, [patch])
+
+  return null
 }
