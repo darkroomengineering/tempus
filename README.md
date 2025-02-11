@@ -1,6 +1,6 @@
 # Tempus
 
-[![TEMPUS](https://assets.darkroom.engineering/tempus/header.png)](https://github.com/darkroomengineering/tempus)
+[![TEMPUS](https://assets.darkroom.engineering/tempus/banner.gif)](https://github.com/darkroomengineering/tempus)
 
 ## Introduction
 
