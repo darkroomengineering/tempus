@@ -78,7 +78,7 @@ Tempus.add(animate, {
 
 ### Priority System
 
-`--[-Infinity]--[0]--[Infinity]--> execution order`
+`——[-Infinity]——[0]——[Infinity]——> execution order`
 
 
 #### Input
