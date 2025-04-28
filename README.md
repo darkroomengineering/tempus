@@ -83,15 +83,14 @@ Tempus.add(animate, {
 
 #### Input
 ```javascript
-
-// Higher priority (runs first)
-Tempus.add(() => console.log('scroll'), { priority: -1 })
-
-// Default priority (runs after scroll)
+// Default priority: 0 (runs second)
 Tempus.add(() => console.log('animate'))
 
-// Lower priority (runs after animate)
+// Priority: 1 (runs third)
 Tempus.add(() => console.log('render'), { priority: 1 })
+
+// Priority: -1 (runs first)
+Tempus.add(() => console.log('scroll'), { priority: -1 })
 ```
 #### Output
 
