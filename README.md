@@ -70,17 +70,36 @@ See [tempus/react](./packages/react/README.md)
 Tempus.add(animate, { 
   fps: 30 // Will run at 30 FPS
 })
+
+Tempus.add(animate, { 
+  fps: '50%' // Will run at 50% of the system's FPS
+})
 ```
 
 ### Priority System
 
-```javascript
-// Higher priority (runs first)
-Tempus.add(criticalAnimation, { priority: -1 })
+`--[-Infinity]--[0]--[Infinity]--> execution order`
 
-// Lower priority (runs after)
-Tempus.add(secondaryAnimation)
+
+#### Input
+```javascript
+
+// Higher priority (runs first)
+Tempus.add(() => console.log('scroll'), { priority: -1 })
+
+// Default priority (runs after scroll)
+Tempus.add(() => console.log('animate'))
+
+// Lower priority (runs after animate)
+Tempus.add(() => console.log('render'), { priority: 1 })
 ```
+#### Output
+
+```
+scroll
+animate
+render
+```	
 
 ### Global RAF Patching
 
@@ -88,6 +107,25 @@ Tempus.add(secondaryAnimation)
 // Patch native requestAnimationFrame across all your app
 Tempus.patch()
 // Now any requestAnimationFrame recursive calls will use Tempus
+```
+
+### Ping Pong Technique
+
+```javascript
+let framesCount = 0
+
+// ping and pong will run at 50% of the system's FPS,
+// but never during the same frame
+Tempus.add(() => {
+  if (framesCount === 0) {
+    console.log('ping')
+  } else {
+    console.log('pong')
+  }
+
+  framesCount++
+  framesCount %= 2
+})
 ```
 
 ## Integration Examples
@@ -133,11 +171,16 @@ Adds an animation callback to the loop.
 
 Patches the native `requestAnimationFrame` to use Tempus.
 
+### Tempus.unpatch()
+
+Unpatches the native `requestAnimationFrame` to use the original one.
+
 ## Best Practices
 
 - Use priorities wisely: critical animations (like scroll) should have higher priority
 - Clean up animations when they're no longer needed
 - Consider using specific FPS for non-critical animations to improve performance (e.g: collisions)
+- Use Ping Pong technique for heavy computations running concurrently.
 
 ## License
 

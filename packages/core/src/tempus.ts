@@ -16,20 +16,33 @@ class Framerate {
     priority: number
     uid: UID
     label: string
-    durations: number[]
-  }[]
-  fps: number
-  time: number
-  lastTickDate: number
+    samples: number[]
+  }[] = []
+  fps: number | string
+  time = 0
+  lastTickDate = performance.now()
+  framesCount = 0
 
-  constructor(fps = Number.POSITIVE_INFINITY) {
-    this.callbacks = []
+  constructor(fps: number | string = Number.POSITIVE_INFINITY) {
     this.fps = fps
-    this.time = 0
-    this.lastTickDate = performance.now()
+  }
+
+  get isRelativeFps() {
+    // eg: '33%'
+    return typeof this.fps === 'string' && this.fps.endsWith('%')
+  }
+
+  get maxFramesCount() {
+    if (!this.isRelativeFps) return 1
+
+    // @ts-ignore
+    return Math.max(1, Math.round(100 / Number(this.fps.replace('%', ''))))
   }
 
   get executionTime() {
+    if (this.isRelativeFps) return 0
+
+    // @ts-ignore
     return 1000 / this.fps
   }
 
@@ -41,22 +54,31 @@ class Framerate {
 
       const duration = performance.now() - now
 
-      this.callbacks[i]!.durations?.push(duration)
-      this.callbacks[i]!.durations = this.callbacks[i]!.durations?.slice(-9)
+      this.callbacks[i]!.samples?.push(duration)
+      this.callbacks[i]!.samples = this.callbacks[i]!.samples?.slice(-9)
     }
   }
 
   raf(time: number, deltaTime: number) {
     this.time += deltaTime
 
-    if (this.fps === Number.POSITIVE_INFINITY) {
-      this.dispatch(time, deltaTime)
-    } else if (this.time >= this.executionTime) {
-      this.time = this.time % this.executionTime
-      const deltaTime = time - this.lastTickDate
-      this.lastTickDate = time
+    if (this.isRelativeFps) {
+      if (this.framesCount === 0) {
+        this.dispatch(time, deltaTime)
+      }
 
-      this.dispatch(time, deltaTime)
+      this.framesCount++
+      this.framesCount %= this.maxFramesCount
+    } else {
+      if (this.fps === Number.POSITIVE_INFINITY) {
+        this.dispatch(time, deltaTime)
+      } else if (this.time >= this.executionTime) {
+        this.time = this.time % this.executionTime
+        const deltaTime = time - this.lastTickDate
+        this.lastTickDate = time
+
+        this.dispatch(time, deltaTime)
+      }
     }
   }
 
@@ -65,11 +87,13 @@ class Framerate {
     priority,
     label,
   }: { callback: TempusCallback; priority: number; label: string }) {
-    if (typeof callback !== 'function')
-      console.error('Tempus.add: callback is not a function')
+    if (typeof callback !== 'function') {
+      console.warn('Tempus.add: callback is not a function')
+      return
+    }
 
     const uid = getUID()
-    this.callbacks.push({ callback, priority, uid, label, durations: [] })
+    this.callbacks.push({ callback, priority, uid, label, samples: [] })
     this.callbacks.sort((a, b) => a.priority - b.priority)
 
     return () => this.remove(uid)
@@ -81,7 +105,7 @@ class Framerate {
 }
 
 class TempusImpl {
-  private framerates: Record<number, Framerate>
+  framerates: Record<number | string, Framerate>
   time: number
   fps?: number
   usage: number
@@ -106,11 +130,15 @@ class TempusImpl {
   ) {
     if (!isClient) return
 
-    if (typeof fps === 'number') {
+    if (
+      typeof fps === 'number' ||
+      (typeof fps === 'string' && fps.endsWith('%'))
+    ) {
       if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps)
-
       return this.framerates[fps].add({ callback, priority, label })
     }
+
+    console.warn('Tempus.add: fps is not a number or a string ending with "%"')
   }
 
   private raf = (time: number) => {
@@ -130,8 +158,7 @@ class TempusImpl {
 
     this.usage = duration / deltaTime
 
-    // @ts-ignore
-    requestAnimationFrame(this.raf, true)
+    requestAnimationFrame(this.raf)
   }
 
   patch() {
