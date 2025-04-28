@@ -28,7 +28,7 @@ Tempus.add(
     console.log('50%')
   },
   {
-    fps: '33%',
+    fps: '50%',
     label: '50%',
   }
 )
@@ -132,11 +132,11 @@ Tempus.add(
 let frameCount = 0
 
 Tempus.add(() => {
-  if (frameCount === 0) {
-    console.log('ping')
-  } else {
-    console.log('pong')
-  }
+  // if (frameCount === 0) {
+  //   console.log('ping')
+  // } else {
+  //   console.log('pong')
+  // }
 
   frameCount++
   frameCount %= 2
