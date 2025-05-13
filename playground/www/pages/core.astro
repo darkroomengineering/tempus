@@ -6,7 +6,9 @@ import pkg from '../../../packages/core/package.json'
 
 <Layout title={`${pkg.name}`}>
   <div id="debug"></div>
-  <div id="app"></div>
+  <div id="app">
+    <div id="stats" />
+  </div>
   <script src="../../core/test.ts"></script>
   <!-- THESE ARE HERE TO TEST THE BROWSER VERSION BUNDLE -->
   <!-- <script is:raw src="../../node_modules/tempus/dist/tempus.min.js"></script> -->

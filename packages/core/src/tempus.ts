@@ -10,6 +10,65 @@ const originalRAF = (isClient &&
 const originalCancelRAF = (isClient &&
   window.cancelAnimationFrame) as typeof window.cancelAnimationFrame
 
+class Clock {
+  private startTime: number = 0
+  private elapsed: number = 0
+  private _isPlaying: boolean = false
+  private lastTime?: number
+  private _deltaTime: number = 0
+
+  play() {
+    if (this._isPlaying) return
+    this.startTime = performance.now() - this.elapsed
+    this._isPlaying = true
+  }
+
+  pause() {
+    if (!this._isPlaying) return
+    this.elapsed = performance.now() - this.startTime
+    this.lastTime = undefined
+    this._deltaTime = 0
+    this._isPlaying = false
+  }
+
+  reset() {
+    this.elapsed = 0
+    this.startTime = 0
+    this.lastTime = undefined
+    this._deltaTime = 0
+    this._isPlaying = false
+  }
+
+  update(browserTime: number) {
+    if (this._isPlaying) {
+      if (this.lastTime === undefined) {
+        this.lastTime = browserTime
+        this.startTime = browserTime
+      } else {
+        const newElapsed = browserTime - this.startTime
+        const newDelta = browserTime - this.lastTime
+        
+        // Ensure delta time is never larger than elapsed time
+        this._deltaTime = newDelta
+        this.lastTime = browserTime
+        this.elapsed = newElapsed
+      }
+    }
+  }
+
+  get time() {
+    return this.elapsed
+  }
+
+  get isPlaying() {
+    return this._isPlaying
+  }
+
+  get deltaTime() {
+    return this._deltaTime
+  }
+}
+
 class Framerate {
   callbacks: {
     callback: TempusCallback
@@ -106,18 +165,53 @@ class Framerate {
 
 class TempusImpl {
   framerates: Record<number | string, Framerate>
-  time: number
+  clock: Clock
   fps?: number
   usage: number
+  rafId: number | undefined
 
   constructor() {
     this.framerates = {}
-    this.time = isClient ? performance.now() : 0
-    this.usage = 0
 
+    this.clock = new Clock()
+    this.usage = 0
     if (!isClient) return
 
-    requestAnimationFrame(this.raf)
+    this.play()
+  }
+
+  restart() {
+    if (this.rafId) { 
+      cancelAnimationFrame(this.rafId)
+    }
+
+    for (const framerate of Object.values(this.framerates)) {
+      framerate.framesCount = 0
+      framerate.time = 0
+      framerate.lastTickDate = performance.now()
+    }
+
+    this.clock.reset()
+    this.play()
+  }
+
+  play() {
+    if (!isClient || this.clock.isPlaying) return
+
+    this.clock.play()
+    this.rafId = requestAnimationFrame(this.raf)
+  }
+
+  pause() {
+    if (!isClient || !this.rafId || !this.clock.isPlaying) return
+
+    cancelAnimationFrame(this.rafId)
+    this.rafId = undefined
+    this.clock.pause()
+  }
+
+  get isPlaying() {
+    return this.clock.isPlaying
   }
 
   add(
@@ -141,24 +235,29 @@ class TempusImpl {
     console.warn('Tempus.add: fps is not a number or a string ending with "%"')
   }
 
-  private raf = (time: number) => {
+  private raf = (browserElapsed: number) => {
     if (!isClient) return
+    
+    this.clock.update(browserElapsed)
 
-    const deltaTime = time - this.time
-    this.time = time
+    const elapsed = this.clock.time
+    const deltaTime = this.clock.deltaTime
+
+    console.log({ deltaTime, elapsed })
 
     this.fps = 1000 / deltaTime
 
     const now = performance.now()
+
     for (const framerate of Object.values(this.framerates)) {
-      framerate.raf(time, deltaTime)
+      framerate.raf(elapsed, deltaTime)
     }
 
     const duration = performance.now() - now
 
     this.usage = duration / deltaTime
 
-    requestAnimationFrame(this.raf)
+    this.rafId = requestAnimationFrame(this.raf)
   }
 
   patch() {
