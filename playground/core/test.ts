@@ -122,7 +122,9 @@ Tempus.add(
     document.querySelector('#stats')!.innerHTML +=
       `<br/><div>fps: ${Math.round(Tempus?.fps ?? 0)} (${Math.floor(
         Tempus.usage * 100
-      )}%)</div>`
+      )}%)</div>
+      <div>elapsed: ${Tempus.clock.time.toFixed(2)}</div>
+      <div>delta: ${Tempus.clock.deltaTime.toFixed(2)}</div><br/>`
   },
   {
     fps: 2,
