@@ -14,8 +14,8 @@ class Clock {
   private startTime: number = 0
   private elapsed: number = 0
   private _isPlaying: boolean = false
-  private lastTime?: number
   private _deltaTime: number = 0
+  private needsReset: boolean = true
 
   play() {
     if (this._isPlaying) return
@@ -25,34 +25,32 @@ class Clock {
 
   pause() {
     if (!this._isPlaying) return
-    this.elapsed = performance.now() - this.startTime
-    this.lastTime = undefined
+    // this.elapsed = performance.now() - this.startTime
     this._deltaTime = 0
     this._isPlaying = false
+    this.needsReset = true
   }
 
   reset() {
     this.elapsed = 0
     this.startTime = 0
-    this.lastTime = undefined
     this._deltaTime = 0
     this._isPlaying = false
+    this.needsReset = true
   }
 
   update(browserTime: number) {
-    if (this._isPlaying) {
-      if (this.lastTime === undefined) {
-        this.lastTime = browserTime
-        this.startTime = browserTime
-      } else {
-        const newElapsed = browserTime - this.startTime
-        const newDelta = browserTime - this.lastTime
-        
-        // Ensure delta time is never larger than elapsed time
-        this._deltaTime = newDelta
-        this.lastTime = browserTime
-        this.elapsed = newElapsed
-      }
+    if (!this._isPlaying) return
+
+    if (this.needsReset) {
+      this.startTime = browserTime
+      this.needsReset = false
+    } else {
+      const newElapsed = browserTime - this.startTime
+      const newDelta = newElapsed - this.elapsed
+
+      this._deltaTime = newDelta
+      this.elapsed = newElapsed
     }
   }
 
