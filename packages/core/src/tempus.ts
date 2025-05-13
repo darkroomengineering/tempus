@@ -25,7 +25,6 @@ class Clock {
 
   pause() {
     if (!this._isPlaying) return
-    // this.elapsed = performance.now() - this.startTime
     this._deltaTime = 0
     this._isPlaying = false
     this.needsReset = true
