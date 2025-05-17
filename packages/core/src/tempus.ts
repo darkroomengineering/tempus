@@ -1,5 +1,6 @@
 // Infinity = max FPS (system default)
 
+import Clock from './clock'
 import type { TempusCallback, TempusOptions, UID } from './types'
 import { getUID } from './uid'
 
@@ -9,62 +10,6 @@ const originalRAF = (isClient &&
   window.requestAnimationFrame) as typeof window.requestAnimationFrame
 const originalCancelRAF = (isClient &&
   window.cancelAnimationFrame) as typeof window.cancelAnimationFrame
-
-class Clock {
-  private startTime: number = 0
-  private elapsed: number = 0
-  private _isPlaying: boolean = false
-  private _deltaTime: number = 0
-  private needsReset: boolean = true
-
-  play() {
-    if (this._isPlaying) return
-    this.startTime = performance.now() - this.elapsed
-    this._isPlaying = true
-  }
-
-  pause() {
-    if (!this._isPlaying) return
-    this._deltaTime = 0
-    this._isPlaying = false
-    this.needsReset = true
-  }
-
-  reset() {
-    this.elapsed = 0
-    this.startTime = 0
-    this._deltaTime = 0
-    this._isPlaying = false
-    this.needsReset = true
-  }
-
-  update(browserTime: number) {
-    if (!this._isPlaying) return
-
-    if (this.needsReset) {
-      this.startTime = browserTime
-      this.needsReset = false
-    } else {
-      const newElapsed = browserTime - this.startTime
-      const newDelta = newElapsed - this.elapsed
-
-      this._deltaTime = newDelta
-      this.elapsed = newElapsed
-    }
-  }
-
-  get time() {
-    return this.elapsed
-  }
-
-  get isPlaying() {
-    return this._isPlaying
-  }
-
-  get deltaTime() {
-    return this._deltaTime
-  }
-}
 
 class Framerate {
   callbacks: {
@@ -161,24 +106,20 @@ class Framerate {
 }
 
 class TempusImpl {
-  framerates: Record<number | string, Framerate>
-  clock: Clock
+  framerates: Record<number | string, Framerate> = {}
+  clock = new Clock()
   fps?: number
-  usage: number
-  rafId: number | undefined
+  usage = 0
+  private rafId: number | undefined
 
   constructor() {
-    this.framerates = {}
-
-    this.clock = new Clock()
-    this.usage = 0
     if (!isClient) return
 
     this.play()
   }
 
   restart() {
-    if (this.rafId) { 
+    if (this.rafId) {
       cancelAnimationFrame(this.rafId)
     }
 
@@ -234,13 +175,11 @@ class TempusImpl {
 
   private raf = (browserElapsed: number) => {
     if (!isClient) return
-    
+
     this.clock.update(browserElapsed)
 
     const elapsed = this.clock.time
     const deltaTime = this.clock.deltaTime
-
-    console.log({ deltaTime, elapsed })
 
     this.fps = 1000 / deltaTime
 
@@ -273,7 +212,6 @@ class TempusImpl {
 
       // @ts-ignore
       if (!callback.__tempusPatched) {
-        console.log('patching', callback.name, callback)
         // @ts-ignore
         callback.__tempusPatched = true
         // @ts-ignore

@@ -1,6 +1,6 @@
 import Tempus from 'tempus'
 
-function isPrime(num) {
+function isPrime(num: number) {
   if (num < 2) return false
   for (let i = 2; i * i <= num; i++) {
     if (num % i === 0) return false
@@ -8,7 +8,7 @@ function isPrime(num) {
   return true
 }
 
-function sumPrimes(limit) {
+function sumPrimes(limit: number) {
   let sum = 0
   for (let i = 2; i <= limit; i++) {
     if (isPrime(i)) {
@@ -155,10 +155,10 @@ playpauseBtn.onclick = () => {
     Tempus.pause()
     playpauseBtn.textContent = 'Play'
   } else {
-    Tempus.play();
-    playpauseBtn.textContent = 'Pause';
+    Tempus.play()
+    playpauseBtn.textContent = 'Pause'
   }
-};
+}
 
 const restartBtn = document.createElement('button')
 restartBtn.textContent = 'Restart'
