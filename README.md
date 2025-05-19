@@ -58,6 +58,14 @@ const unsubscribe = Tempus.add(animate)
 unsubscribe()
 ```
 
+### Playback Control
+
+```javascript
+Tempus.pause() // no rafs will be called
+Tempus.play() // resume
+Tempus.restart() // set clock elapsed time to 0
+```
+
 ### React
 
 See [tempus/react](./packages/react/README.md)
