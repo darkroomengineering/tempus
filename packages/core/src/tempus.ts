@@ -181,8 +181,6 @@ class TempusImpl {
     const elapsed = this.clock.time
     const deltaTime = this.clock.deltaTime
 
-    console.log('raf >>>', { elapsed, deltaTime })
-
     this.fps = 1000 / deltaTime
 
     const now = performance.now()
