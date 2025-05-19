@@ -9,6 +9,7 @@ export default class Clock {
   play() {
     if (this._isPlaying) return
     this._currentTime = 0
+    this._startTime = undefined
     this._isPlaying = true
   }
 
@@ -16,7 +17,6 @@ export default class Clock {
     if (!this._isPlaying) return
     this._deltaTime = 0
     this._isPlaying = false
-    this._startTime = undefined
   }
 
   reset() {
