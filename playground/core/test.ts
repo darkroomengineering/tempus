@@ -147,7 +147,7 @@ Tempus.add(() => {
 })
 
 const playpauseBtn = document.createElement('button')
-playpauseBtn.textContent = 'Play/Pause'
+playpauseBtn.textContent = 'Pause'
 playpauseBtn.style.marginRight = '10px'
 playpauseBtn.onclick = () => {
   console.log('was playing?', Tempus.isPlaying)
