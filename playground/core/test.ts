@@ -1,6 +1,6 @@
 import Tempus from 'tempus'
 
-function isPrime(num) {
+function isPrime(num: number) {
   if (num < 2) return false
   for (let i = 2; i * i <= num; i++) {
     if (num % i === 0) return false
@@ -8,7 +8,7 @@ function isPrime(num) {
   return true
 }
 
-function sumPrimes(limit) {
+function sumPrimes(limit: number) {
   let sum = 0
   for (let i = 2; i <= limit; i++) {
     if (isPrime(i)) {
@@ -78,7 +78,9 @@ function slider() {
 requestAnimationFrame(slider)
 
 Tempus.add(
-  () => {
+  (elapsed, deltaTime) => {
+    // console.log({ elapsed, deltaTime })
+
     const instances = Object.values(Tempus.framerates)
       .flatMap((framerate) =>
         framerate.callbacks.map((callback) => ({
@@ -93,7 +95,7 @@ Tempus.add(
     //   console.log(instance.label, instance.samples)
     // })
 
-    document.querySelector('#app')!.innerHTML = instances
+    document.querySelector('#stats')!.innerHTML = instances
       .map((instance, index) => {
         // let duration = instance.samples.at(-1)
         const duration =
@@ -117,10 +119,12 @@ Tempus.add(
       })
       .join('\n')
 
-    document.querySelector('#app')!.innerHTML +=
+    document.querySelector('#stats')!.innerHTML +=
       `<br/><div>fps: ${Math.round(Tempus?.fps ?? 0)} (${Math.floor(
         Tempus.usage * 100
-      )}%)</div>`
+      )}%)</div>
+      <div>elapsed: ${Tempus.clock.time.toFixed(2)}</div>
+      <div>delta: ${Tempus.clock.deltaTime.toFixed(2)}</div><br/>`
   },
   {
     fps: 2,
@@ -141,3 +145,27 @@ Tempus.add(() => {
   frameCount++
   frameCount %= 2
 })
+
+const playpauseBtn = document.createElement('button')
+playpauseBtn.textContent = 'Pause'
+playpauseBtn.style.marginRight = '10px'
+playpauseBtn.onclick = () => {
+  console.log('was playing?', Tempus.isPlaying)
+  if (Tempus.isPlaying) {
+    Tempus.pause()
+    playpauseBtn.textContent = 'Play'
+  } else {
+    Tempus.play()
+    playpauseBtn.textContent = 'Pause'
+  }
+}
+
+const restartBtn = document.createElement('button')
+restartBtn.textContent = 'Restart'
+restartBtn.onclick = () => {
+  console.log('restarting')
+  Tempus.restart()
+}
+
+document.querySelector('#app')!.appendChild(playpauseBtn)
+document.querySelector('#app')!.appendChild(restartBtn)
