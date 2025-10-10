@@ -6,8 +6,8 @@
 import { useTempus } from 'tempus/react'
 
 function App() {  
-  useTempus((time, deltaTime) => {
-    console.log('frame', time, deltaTime)
+  useTempus((time, deltaTime, frameCount) => {
+    console.log('frame', time, deltaTime, frameCount)
   })
 }
 ```

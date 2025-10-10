@@ -1,10 +1,10 @@
 'use client'
 
 import Tempus from 'tempus'
-import { useLayoutEffect } from 'react'
+import { useEffect } from 'react'
 
 export function ReactTempus({ patch = true }: { patch?: boolean }) {
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!Tempus || !patch) return
 
     Tempus.patch()

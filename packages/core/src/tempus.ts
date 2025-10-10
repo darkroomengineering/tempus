@@ -47,11 +47,11 @@ class Framerate {
     return 1000 / this.fps
   }
 
-  dispatch(time: number, deltaTime: number) {
+  dispatch(time: number, deltaTime: number, frameCount: number) {
     for (let i = 0; i < this.callbacks.length; i++) {
       const now = performance.now()
 
-      this.callbacks[i]?.callback(time, deltaTime)
+      this.callbacks[i]?.callback(time, deltaTime, frameCount)
 
       const duration = performance.now() - now
 
@@ -60,25 +60,25 @@ class Framerate {
     }
   }
 
-  raf(time: number, deltaTime: number) {
+  raf(time: number, deltaTime: number, frameCount: number) {
     this.time += deltaTime
 
     if (this.isRelativeFps) {
       if (this.framesCount === 0) {
-        this.dispatch(time, deltaTime)
+        this.dispatch(time, deltaTime, frameCount)
       }
 
       this.framesCount++
       this.framesCount %= this.maxFramesCount
     } else {
       if (this.fps === Number.POSITIVE_INFINITY) {
-        this.dispatch(time, deltaTime)
+        this.dispatch(time, deltaTime, frameCount)
       } else if (this.time >= this.executionTime) {
         this.time = this.time % this.executionTime
         const deltaTime = time - this.lastTickDate
         this.lastTickDate = time
 
-        this.dispatch(time, deltaTime)
+        this.dispatch(time, deltaTime, frameCount)
       }
     }
   }
@@ -111,6 +111,7 @@ class TempusImpl {
   fps?: number
   usage = 0
   private rafId: number | undefined
+  frameCount = 0
 
   constructor() {
     if (!isClient) return
@@ -122,6 +123,7 @@ class TempusImpl {
     if (this.rafId) {
       cancelAnimationFrame(this.rafId)
     }
+    this.frameCount = 0
 
     for (const framerate of Object.values(this.framerates)) {
       framerate.framesCount = 0
@@ -186,12 +188,13 @@ class TempusImpl {
     const now = performance.now()
 
     for (const framerate of Object.values(this.framerates)) {
-      framerate.raf(elapsed, deltaTime)
+      framerate.raf(elapsed, deltaTime, this.frameCount)
     }
 
     const duration = performance.now() - now
 
     this.usage = duration / deltaTime
+    this.frameCount++
 
     this.rafId = requestAnimationFrame(this.raf)
   }
@@ -205,7 +208,7 @@ class TempusImpl {
     ) => {
       if (
         callback === this.raf ||
-        !callback.toString().includes('requestAnimationFrame(')
+        !callback.toString().includes(`requestAnimationFrame(${callback.name})`) // target recursive calls
       ) {
         return originalRAF(callback)
       }

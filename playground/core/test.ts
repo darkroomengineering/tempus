@@ -1,4 +1,5 @@
 import Tempus from 'tempus'
+import Lottie from 'lottie-web'
 
 function isPrime(num: number) {
   if (num < 2) return false
@@ -22,6 +23,29 @@ function animate(time: number, deltaTime: number) {
   // console.log('frame:10', time, deltaTime)
   const result = sumPrimes(50000)
 }
+
+Tempus.patch()
+
+const element = document.createElement('div')
+element.style.width = '100px'
+element.style.height = '100px'
+document.querySelector('#app')!.appendChild(element)
+
+const animation = Lottie.loadAnimation({
+  container: element, // the dom element that will contain the animation
+  // renderer: 'svg',
+  loop: true,
+  autoplay: true,
+  path: '/lottie.json', // the path to the animation json
+})
+
+setTimeout(() => {
+  animation.play()
+}, 1000)
+
+console.log(animation)
+
+// animation.play()
 
 Tempus.add(
   () => {
@@ -68,9 +92,9 @@ Tempus.add(animate, {
   label: 'lenis',
 })
 
-Tempus.patch()
+window.tempus = Tempus
 
-function slider() {
+const slider = () => {
   sumPrimes(10030)
   requestAnimationFrame(slider)
 }
@@ -124,7 +148,8 @@ Tempus.add(
         Tempus.usage * 100
       )}%)</div>
       <div>elapsed: ${Tempus.clock.time.toFixed(2)}</div>
-      <div>delta: ${Tempus.clock.deltaTime.toFixed(2)}</div><br/>`
+      <div>delta: ${Tempus.clock.deltaTime.toFixed(2)}</div>
+      <div>frameCount: ${Tempus.frameCount}</div><br/>`
   },
   {
     fps: 2,
@@ -135,7 +160,7 @@ Tempus.add(
 
 let frameCount = 0
 
-Tempus.add(() => {
+Tempus.add((_, __, count) => {
   // if (frameCount === 0) {
   //   console.log('ping')
   // } else {
@@ -165,6 +190,7 @@ restartBtn.textContent = 'Restart'
 restartBtn.onclick = () => {
   console.log('restarting')
   Tempus.restart()
+  playpauseBtn.textContent = 'Pause'
 }
 
 document.querySelector('#app')!.appendChild(playpauseBtn)

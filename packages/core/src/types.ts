@@ -1,4 +1,8 @@
-export type TempusCallback = (time: number, deltaTime: number) => void
+export type TempusCallback = (
+  time: number,
+  deltaTime: number,
+  frameCount: number
+) => void
 
 export type TempusOptions = {
   priority?: number

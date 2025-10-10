@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      lottie-web:
+        specifier: ^5.13.0
+        version: 5.13.0
       react:
         specifier: '>=17.0.0'
         version: 19.0.0
@@ -1656,6 +1659,9 @@ packages:
     resolution: {integrity: sha512-5RIwHuCb979RASgCJH0VKERn9cQo/+NcAi2BMe9ddj+gp7hujl6BI+qdOG4nVsLDpwWEJwTVYXNKP6BGgbcoGA==}
     engines: {node: '>= 8.x', npm: '>= 5.x'}
     hasBin: true
+
+  lottie-web@5.13.0:
+    resolution: {integrity: sha512-+gfBXl6sxXMPe8tKQm7qzLnUy5DUPJPKIyRHwtpCpyUEYjHYRJC/5gjUvdkuO2c3JllrPtHXH5UJJK8LRYl5yQ==}
 
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
@@ -4104,6 +4110,8 @@ snapshots:
   lorem-ipsum@2.0.8:
     dependencies:
       commander: 9.5.0
+
+  lottie-web@5.13.0: {}
 
   lru-cache@10.4.3: {}
 
