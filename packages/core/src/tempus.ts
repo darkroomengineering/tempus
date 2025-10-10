@@ -206,27 +206,34 @@ class TempusImpl {
       callback,
       { priority = 0, fps = Number.POSITIVE_INFINITY } = {}
     ) => {
+      const stringifiedCallback = callback.toString()
+
       if (
-        callback === this.raf ||
-        !callback.toString().includes(`requestAnimationFrame(${callback.name})`) // target recursive calls
+        (stringifiedCallback.includes(
+          `requestAnimationFrame(${callback.name})`
+        ) ||
+          stringifiedCallback.includes(
+            `requestAnimationFrame(this.${callback.name})`
+          )) &&
+        callback !== this.raf
       ) {
-        return originalRAF(callback)
+        // @ts-ignore
+        if (!callback.__tempusPatched) {
+          // @ts-ignore
+          callback.__tempusPatched = true
+          // @ts-ignore
+          callback.__tempusUnsubscribe = this.add(callback, {
+            priority,
+            fps,
+            label: callback.name,
+          })
+        }
+
+        // @ts-ignore
+        return callback.__tempusUnsubscribe
       }
 
-      // @ts-ignore
-      if (!callback.__tempusPatched) {
-        // @ts-ignore
-        callback.__tempusPatched = true
-        // @ts-ignore
-        callback.__tempusUnsubscribe = this.add(callback, {
-          priority,
-          fps,
-          label: callback.name,
-        })
-      }
-
-      // @ts-ignore
-      return callback.__tempusUnsubscribe
+      return originalRAF(callback)
     }
 
     window.cancelAnimationFrame = (callback: number | (() => void)) => {

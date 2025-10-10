@@ -39,23 +39,23 @@ const animation = Lottie.loadAnimation({
   path: '/lottie.json', // the path to the animation json
 })
 
-setTimeout(() => {
-  animation.play()
-}, 1000)
+// setTimeout(() => {
+//   animation.play()
+// }, 1000)
 
-console.log(animation)
+// console.log(animation)
 
-// animation.play()
+// // animation.play()
 
-Tempus.add(
-  () => {
-    console.log('50%')
-  },
-  {
-    fps: '50%',
-    label: '50%',
-  }
-)
+// Tempus.add(
+//   () => {
+//     console.log('50%')
+//   },
+//   {
+//     fps: '50%',
+//     label: '50%',
+//   }
+// )
 
 Tempus.add(
   () => {
@@ -67,16 +67,16 @@ Tempus.add(
   }
 )
 
-Tempus.add(
-  () => {
-    sumPrimes(25030)
-    console.log('webgl:render')
-  },
-  {
-    priority: 1,
-    label: 'webgl:render',
-  }
-)
+// Tempus.add(
+//   () => {
+//     sumPrimes(25030)
+//     console.log('webgl:render')
+//   },
+//   {
+//     priority: 1,
+//     label: 'webgl:render',
+//   }
+// )
 
 Tempus.add(
   () => {
@@ -93,6 +93,19 @@ Tempus.add(animate, {
 })
 
 window.tempus = Tempus
+
+class Test {
+  constructor() {
+    this.raf()
+  }
+
+  raf = () => {
+    console.log('test raf')
+    requestAnimationFrame(this.raf)
+  }
+}
+
+new Test()
 
 const slider = () => {
   sumPrimes(10030)
