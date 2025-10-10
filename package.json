@@ -1,6 +1,6 @@
 {
   "name": "tempus",
-  "version": "1.0.0-dev.12",
+  "version": "1.0.0-dev.14",
   "description": "one rAF to rule them all",
   "type": "module",
   "sideEffects": false,
@@ -61,7 +61,8 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "tsup": "^8.3.6",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "lottie-web": "^5.13.0"
   },
   "peerDependencies": {
     "react": ">=17.0.0"
@@ -70,8 +71,5 @@
     "react": {
       "optional": true
     }
-  },
-  "dependencies": {
-    "lottie-web": "^5.13.0"
   }
 }
