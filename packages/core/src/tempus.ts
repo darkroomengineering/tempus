@@ -3,6 +3,7 @@
 import Clock from './clock'
 import type { TempusCallback, TempusOptions, UID } from './types'
 import { getUID } from './uid'
+import { version } from '../../../package.json'
 
 const isClient = typeof window !== 'undefined'
 
@@ -10,6 +11,10 @@ const originalRAF = (isClient &&
   window.requestAnimationFrame) as typeof window.requestAnimationFrame
 const originalCancelRAF = (isClient &&
   window.cancelAnimationFrame) as typeof window.cancelAnimationFrame
+
+if (isClient) {
+  ;(window as any).tempusVersion = version
+}
 
 class Framerate {
   callbacks: {
