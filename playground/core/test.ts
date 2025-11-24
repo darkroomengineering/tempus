@@ -60,10 +60,12 @@ const animation = Lottie.loadAnimation({
 Tempus.add(
   () => {
     sumPrimes(50030)
+    console.log(Tempus)
   },
   {
     fps: 10,
     label: 'gsap',
+    idle: 0.33, // idle callback will only run when the usage is less than 80%
   }
 )
 

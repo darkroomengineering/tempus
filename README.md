@@ -106,23 +106,23 @@ Tempus.add(() => console.log('scroll'), { priority: -1 })
 scroll
 animate
 render
-```	
+```
 
-### Global RAF Patching
+### Idle Callback
+
+`idle` callback will only run when the usage is less than the idle percentage in order to not block the main thread. It's useful for optional background tasks.
 
 ```javascript
-// Patch native requestAnimationFrame across all your app
-Tempus.patch()
-// Now any requestAnimationFrame recursive calls will use Tempus
+Tempus.add(() => console.log('idle'), { idle: 0.8 }) // will only run when the raf usage is less than 80%
 ```
 
 ### Ping Pong Technique
 
+`ping` and `pong` will alternate between each frame, but never during the same frame
+
 ```javascript
 let framesCount = 0
 
-// ping and pong will run at 50% of the system's FPS,
-// but never during the same frame
 Tempus.add(() => {
   if (framesCount === 0) {
     console.log('ping')
@@ -133,6 +133,14 @@ Tempus.add(() => {
   framesCount++
   framesCount %= 2
 })
+```
+
+### Global RAF Patching
+
+```javascript
+// Patch native requestAnimationFrame across all your app
+Tempus.patch()
+// Now any requestAnimationFrame recursive calls will use Tempus
 ```
 
 ## Integration Examples
@@ -168,7 +176,7 @@ Tempus.add(() => {
 
 Adds an animation callback to the loop.
 
-- **callback**: `(time: number, deltaTime: number) => void`
+- **callback**: `(time: number, deltaTime: number, frameCount: number) => void`
 - **options**:
   - `priority`: `number` (default: 0) - Lower numbers run first
   - `fps`: `number` (default: Infinity) - Target frame rate
@@ -187,7 +195,7 @@ Unpatches the native `requestAnimationFrame` to use the original one.
 - Use priorities wisely: critical animations (like scroll) should have higher priority
 - Clean up animations when they're no longer needed
 - Consider using specific FPS for non-critical animations to improve performance (e.g: collisions)
-- Use Ping Pong technique for heavy computations running concurrently.
+- Use Ping Pong technique for heavy computations running concurrently
 
 ## License
 

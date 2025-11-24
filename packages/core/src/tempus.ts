@@ -16,6 +16,12 @@ if (isClient) {
   ;(window as any).tempusVersion = version
 }
 
+function stopwatch(callback: () => void) {
+  const now = performance.now()
+  callback()
+  return performance.now() - now
+}
+
 class Framerate {
   callbacks: {
     callback: TempusCallback
@@ -23,6 +29,7 @@ class Framerate {
     uid: UID
     label: string
     samples: number[]
+    idle: number
   }[] = []
   fps: number | string
   time = 0
@@ -54,11 +61,13 @@ class Framerate {
 
   dispatch(time: number, deltaTime: number, frameCount: number) {
     for (let i = 0; i < this.callbacks.length; i++) {
-      const now = performance.now()
-
-      this.callbacks[i]?.callback(time, deltaTime, frameCount)
-
-      const duration = performance.now() - now
+      const duration = stopwatch(() => {
+        if (
+          (this.callbacks[i]?.idle ?? Number.POSITIVE_INFINITY) > Tempus.usage
+        ) {
+          this.callbacks[i]?.callback(time, deltaTime, frameCount)
+        }
+      })
 
       this.callbacks[i]!.samples?.push(duration)
       this.callbacks[i]!.samples = this.callbacks[i]!.samples?.slice(-9)
@@ -92,14 +101,20 @@ class Framerate {
     callback,
     priority,
     label,
-  }: { callback: TempusCallback; priority: number; label: string }) {
+    idle,
+  }: {
+    callback: TempusCallback
+    priority: number
+    label: string
+    idle: number
+  }) {
     if (typeof callback !== 'function') {
       console.warn('Tempus.add: callback is not a function')
       return
     }
 
     const uid = getUID()
-    this.callbacks.push({ callback, priority, uid, label, samples: [] })
+    this.callbacks.push({ callback, priority, uid, label, samples: [], idle })
     this.callbacks.sort((a, b) => a.priority - b.priority)
 
     return () => this.remove(uid)
@@ -165,6 +180,7 @@ class TempusImpl {
       priority = 0,
       fps = Number.POSITIVE_INFINITY,
       label = '',
+      idle = Number.POSITIVE_INFINITY,
     }: TempusOptions = {}
   ) {
     if (!isClient) return
@@ -174,7 +190,7 @@ class TempusImpl {
       (typeof fps === 'string' && fps.endsWith('%'))
     ) {
       if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps)
-      return this.framerates[fps].add({ callback, priority, label })
+      return this.framerates[fps].add({ callback, priority, label, idle })
     }
 
     console.warn('Tempus.add: fps is not a number or a string ending with "%"')
@@ -190,15 +206,16 @@ class TempusImpl {
 
     this.fps = 1000 / deltaTime
 
-    const now = performance.now()
+    const duration = stopwatch(() => {
+      for (const framerate of Object.values(this.framerates)) {
+        framerate.raf(elapsed, deltaTime, this.frameCount)
+      }
+    })
 
-    for (const framerate of Object.values(this.framerates)) {
-      framerate.raf(elapsed, deltaTime, this.frameCount)
+    if (deltaTime) {
+      this.usage = duration / deltaTime
     }
 
-    const duration = performance.now() - now
-
-    this.usage = duration / deltaTime
     this.frameCount++
 
     this.rafId = requestAnimationFrame(this.raf)

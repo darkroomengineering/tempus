@@ -8,6 +8,7 @@ export type TempusOptions = {
   priority?: number
   fps?: number | string
   label?: string
+  idle?: number
 }
 
 export type UID = number
