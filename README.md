@@ -13,12 +13,12 @@
 
 ## Features
 
-- 🚀 Merge multiple requestAnimationFrame loops for better performance
-- 🎯 Control execution priority of different animations
-- ⚡ Support for custom frame rates (FPS)
-- 🔄 Compatible with popular animation libraries
-- 🪶 Zero dependencies
-- 📦 ~1KB gzipped
+- **One shared rAF loop** — merges every requestAnimationFrame call into a single loop to cut per-frame overhead
+- **Priority ordering** — run animations in an explicit order each frame instead of registration order
+- **Custom frame rates** — throttle callbacks to a target FPS independent of the display refresh
+- **Library-friendly** — drop-in compatible with GSAP, Lenis, and other animation tools
+- **Zero dependencies** — no external packages, nothing extra to audit
+- **~1KB gzipped** — a negligible footprint for a core primitive
 
 ## Installation
 
