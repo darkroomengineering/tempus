@@ -1,14 +1,20 @@
-export type TempusCallback = (
-  time: number,
-  deltaTime: number,
-  frameCount: number
-) => void
+// The single object passed to every Tempus callback each tick. `budget()`
+// returns the live remaining frame time in ms (= the browser IdleDeadline's
+// timeRemaining): positive means headroom, negative means the frame is already
+// over budget. Gate expensive work on it, e.g. `if (budget() > 0) doWork()`.
+export type TempusState = {
+  time: number
+  deltaTime: number
+  frame: number
+  budget: () => number
+}
+
+export type TempusCallback = (state: TempusState) => void
 
 export type TempusOptions = {
   priority?: number
   fps?: number | string
   label?: string
-  idle?: number
 }
 
 export type UID = number
@@ -21,6 +27,5 @@ export type TempusCallbackInfo = {
   samples: number[]
   priority: number
   fps: number | string
-  idle: number
   source: 'add' | 'patch'
 }

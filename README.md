@@ -16,6 +16,7 @@
 - **One shared rAF loop** — merges every requestAnimationFrame call into a single loop to cut per-frame overhead
 - **Priority ordering** — run animations in an explicit order each frame instead of registration order
 - **Custom frame rates** — throttle callbacks to a target FPS independent of the display refresh
+- **Frame budget** — every callback gets `state.budget()` (ms left this frame) to gracefully skip or chunk work
 - **Library-friendly** — drop-in compatible with GSAP, Lenis, and other animation tools
 - **Zero dependencies** — no external packages, nothing extra to audit
 - **~1KB gzipped** — a negligible footprint for a core primitive
@@ -43,8 +44,10 @@ using script tag
 ```javascript
 import Tempus from "tempus"
 
-// Simple animation at maximum FPS
-function animate(time, deltaTime) {
+// Simple animation at maximum FPS.
+// Every callback receives a single `state` object:
+// { time, deltaTime, frame, budget }
+function animate({ time, deltaTime, frame, budget }) {
   console.log('frame', time, deltaTime)
 }
 
@@ -108,30 +111,38 @@ animate
 render
 ```
 
-### Idle Callback
+### Idle Pattern (frame budget)
 
-`idle` callback will only run when the usage is less than the idle percentage in order to not block the main thread. It's useful for optional background tasks.
+`state.budget()` returns the milliseconds left in the current frame before it exceeds the budget (`1000 / Tempus.targetFps`, default 60fps ≈ 16.67ms). It's the live equivalent of `requestIdleCallback`'s `timeRemaining()`, so you can gate optional or expensive work and avoid blocking the main thread:
 
 ```javascript
-Tempus.add(() => console.log('idle'), { idle: 0.8 }) // will only run when the raf usage is less than 80%
+// run only when there's spare frame time left
+Tempus.add(({ budget }) => {
+  if (budget() > 0) doExpensiveWork()
+})
+
+// or chew through work in chunks until the budget runs out.
+// budget() is live, so calling it again inside the loop reflects time already spent.
+Tempus.add((state) => {
+  while (state.budget() > 0) {
+    doChunkOfWork()
+  }
+})
 ```
+
+Tune the target with `Tempus.targetFps` (default `60`). Note this is *frame-budget* idle — leftover time before the frame is over budget — not the browser's true post-paint idle. For genuine background work, prefer native `requestIdleCallback`.
 
 ### Ping Pong Technique
 
 `ping` and `pong` will alternate between each frame, but never during the same frame
 
 ```javascript
-let framesCount = 0
-
-Tempus.add(() => {
-  if (framesCount === 0) {
+Tempus.add(({ frame }) => {
+  if (frame % 2 === 0) {
     console.log('ping')
   } else {
     console.log('pong')
   }
-
-  framesCount++
-  framesCount %= 2
 })
 ```
 
@@ -147,7 +158,8 @@ Tempus.patch()
 
 ### With Lenis Smooth Scroll
 ```javascript
-Tempus.add(lenis.raf)
+// lenis.raf expects a time in ms, so pull it off the state object
+Tempus.add(({ time }) => lenis.raf(time))
 ```
 
 ### With GSAP
@@ -156,7 +168,7 @@ Tempus.add(lenis.raf)
 gsap.ticker.remove(gsap.updateRoot)
 
 // Add to Tempus
-Tempus.add((time) => {
+Tempus.add(({ time }) => {
   gsap.updateRoot(time / 1000)
 })
 ```
@@ -176,11 +188,19 @@ Tempus.add(() => {
 
 Adds an animation callback to the loop.
 
-- **callback**: `(time: number, deltaTime: number, frameCount: number) => void`
+- **callback**: `(state: TempusState) => void`, where `TempusState` is:
+  - `time`: `number` - Elapsed time in ms since the loop started
+  - `deltaTime`: `number` - Time in ms since this callback's previous run
+  - `frame`: `number` - Frame counter
+  - `budget`: `() => number` - Call it for the ms left in the current frame before exceeding the budget (live)
 - **options**:
   - `priority`: `number` (default: 0) - Lower numbers run first
   - `fps`: `number` (default: Infinity) - Target frame rate
 - **Returns**: `() => void` - Unsubscribe function
+
+### Tempus.targetFps
+
+`number` (default: `60`). The frame rate `state.budget()` is measured against — the budget per frame is `1000 / Tempus.targetFps` ms.
 
 ### Tempus.patch()
 
@@ -195,6 +215,7 @@ Unpatches the native `requestAnimationFrame` to use the original one.
 - Use priorities wisely: critical animations (like scroll) should have higher priority
 - Clean up animations when they're no longer needed
 - Consider using specific FPS for non-critical animations to improve performance (e.g: collisions)
+- Gate optional or expensive work on `state.budget()` so it yields when the frame is full
 - Use Ping Pong technique for heavy computations running concurrently
 
 ## License

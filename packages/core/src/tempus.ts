@@ -5,6 +5,7 @@ import type {
   TempusCallback,
   TempusCallbackInfo,
   TempusOptions,
+  TempusState,
   UID,
 } from './types'
 import { getUID } from './uid'
@@ -62,7 +63,6 @@ class Framerate {
     uid: UID
     label: string
     samples: number[]
-    idle: number
   }[] = []
   fps: number | string
   time = 0
@@ -92,39 +92,39 @@ class Framerate {
     return 1000 / this.fps
   }
 
-  dispatch(time: number, deltaTime: number, frameCount: number) {
+  dispatch(state: TempusState) {
     for (let i = 0; i < this.callbacks.length; i++) {
       const duration = stopwatch(() => {
-        if (
-          (this.callbacks[i]?.idle ?? Number.POSITIVE_INFINITY) > Tempus.usage
-        ) {
-          this.callbacks[i]?.callback(time, deltaTime, frameCount)
-        }
+        this.callbacks[i]?.callback(state)
       })
 
       pushSample(this.callbacks[i]!.samples, duration)
     }
   }
 
-  raf(time: number, deltaTime: number, frameCount: number) {
-    this.time += deltaTime
+  raf(state: TempusState) {
+    this.time += state.deltaTime
 
     if (this.isRelativeFps) {
       if (this.framesCount === 0) {
-        this.dispatch(time, deltaTime, frameCount)
+        this.dispatch(state)
       }
 
       this.framesCount++
       this.framesCount %= this.maxFramesCount
     } else {
       if (this.fps === Number.POSITIVE_INFINITY) {
-        this.dispatch(time, deltaTime, frameCount)
+        this.dispatch(state)
       } else if (this.time >= this.executionTime) {
         this.time = this.time % this.executionTime
-        const deltaTime = time - this.lastTickDate
-        this.lastTickDate = time
 
-        this.dispatch(time, deltaTime, frameCount)
+        // Throttled buckets report the longer delta since they last ran;
+        // override on the shared state, then restore for the other buckets.
+        const frameDelta = state.deltaTime
+        state.deltaTime = state.time - this.lastTickDate
+        this.lastTickDate = state.time
+        this.dispatch(state)
+        state.deltaTime = frameDelta
       }
     }
   }
@@ -133,12 +133,10 @@ class Framerate {
     callback,
     priority,
     label,
-    idle,
   }: {
     callback: TempusCallback
     priority: number
     label: string
-    idle: number
   }) {
     if (typeof callback !== 'function') {
       console.warn('Tempus.add: callback is not a function')
@@ -146,7 +144,7 @@ class Framerate {
     }
 
     const uid = getUID()
-    this.callbacks.push({ callback, priority, uid, label, samples: [], idle })
+    this.callbacks.push({ callback, priority, uid, label, samples: [] })
     this.callbacks.sort((a, b) => a.priority - b.priority)
 
     return () => this.remove(uid)
@@ -165,6 +163,21 @@ class TempusImpl {
   private rafId: number | undefined
   frameCount = 0
 
+  // Frame rate the per-callback `budget` is measured against. At 60fps the
+  // budget is ~16.67ms; callbacks call `state.budget()` to see how much of it
+  // is left and decide whether to do expensive work this frame.
+  targetFps = 60
+  private frameStartTime = performance.now()
+
+  get frameBudget() {
+    return 1000 / this.targetFps
+  }
+
+  // The single object handed to every callback each tick. Reused (not
+  // reallocated) to avoid per-frame GC; `budget()` is a live method (built in
+  // the constructor) so it always reflects the time left at the moment called.
+  private state!: TempusState
+
   // patch() state
   private patched = false
   private rafQueue = new Map<number, FrameRequestCallback>()
@@ -181,6 +194,16 @@ class TempusImpl {
   private patchAnonCount = 0
 
   constructor() {
+    const impl = this
+    this.state = {
+      time: 0,
+      deltaTime: 0,
+      frame: 0,
+      budget() {
+        return impl.frameBudget - (performance.now() - impl.frameStartTime)
+      },
+    }
+
     if (!isClient) return
 
     this.play()
@@ -227,7 +250,6 @@ class TempusImpl {
       priority = 0,
       fps = Number.POSITIVE_INFINITY,
       label = '',
-      idle = Number.POSITIVE_INFINITY,
     }: TempusOptions = {}
   ) {
     if (!isClient) return
@@ -237,7 +259,7 @@ class TempusImpl {
       (typeof fps === 'string' && fps.endsWith('%'))
     ) {
       if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps)
-      return this.framerates[fps].add({ callback, priority, label, idle })
+      return this.framerates[fps].add({ callback, priority, label })
     }
 
     console.warn('Tempus.add: fps is not a number or a string ending with "%"')
@@ -252,10 +274,15 @@ class TempusImpl {
     const deltaTime = this.clock.deltaTime
 
     this.fps = 1000 / deltaTime
+    this.frameStartTime = performance.now()
+
+    this.state.time = elapsed
+    this.state.deltaTime = deltaTime
+    this.state.frame = this.frameCount
 
     const duration = stopwatch(() => {
       for (const framerate of Object.values(this.framerates)) {
-        framerate.raf(elapsed, deltaTime, this.frameCount)
+        framerate.raf(this.state)
       }
     })
 
@@ -379,7 +406,6 @@ class TempusImpl {
         samples: callback.samples.slice(),
         priority: callback.priority,
         fps: framerate.fps,
-        idle: callback.idle,
         source: 'add' as const,
       }))
     )
@@ -391,7 +417,6 @@ class TempusImpl {
       samples: entry.samples.slice(),
       priority: 0,
       fps: Number.POSITIVE_INFINITY,
-      idle: Number.POSITIVE_INFINITY,
       source: 'patch' as const,
     }))
 

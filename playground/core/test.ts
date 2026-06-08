@@ -20,10 +20,11 @@ function sumPrimes(limit: number) {
   return sum
 }
 
-// function animate(time: number, deltaTime: number) {
-//   // console.log('frame:10', time, deltaTime)
-//   const result = sumPrimes(50000)
-// }
+function _animate() {
+  // a plain Tempus callback; the state arg (time/deltaTime/frame/budget) is
+  // ignored here
+  const result = sumPrimes(50000)
+}
 
 Tempus.patch()
 
@@ -80,13 +81,13 @@ animate(
 
 Tempus.add(
   () => {
-    sumPrimes(50030)
+    sumPrimes(100030)
     console.log(Tempus)
   },
   {
     fps: 10,
     label: 'gsap',
-    idle: 0.33, // idle callback will only run when the usage is less than 80%
+    // idle: 0.33, // idle callback will only run when the usage is less than 80%
   }
 )
 
@@ -110,7 +111,25 @@ Tempus.add(
   }
 )
 
-Tempus.add(animate, {
+// budget-gated work: every callback receives `state.budget()` (ms left in the
+// ~16.67ms @ 60fps frame). Self-gate expensive work on it — no special `idle`
+// option needed. `budget` is live, so you can loop until it runs out.
+Tempus.add(
+  (state) => {
+    let chunks = 0
+    console.log('budget', state.budget())
+    while (state.budget() > 0) {
+      sumPrimes(2000)
+      chunks++
+    }
+    if (chunks) console.log('idle:work ran', chunks, 'chunks')
+  },
+  {
+    label: 'idle:work',
+  }
+)
+
+Tempus.add(_animate, {
   priority: -1,
   label: 'lenis',
 })
@@ -138,9 +157,7 @@ const slider = () => {
 requestAnimationFrame(slider)
 
 Tempus.add(
-  (elapsed, deltaTime) => {
-    // console.log({ elapsed, deltaTime })
-
+  () => {
     // One unified feed: Tempus.add() callbacks and Tempus.patch()-absorbed
     // loops, normalized to the same shape. Patched rows are prefixed so the
     // source stays visible.
@@ -201,12 +218,13 @@ Tempus.add(
 let frameCount = 0
 
 Tempus.add(
-  (_, __, count) => {
-    // if (frameCount === 0) {
-    //   console.log('ping')
-    // } else {
-    //   console.log('pong')
-    // }
+  ({ frame }) => {
+    // ping/pong on alternating frames
+    if (frame % 2 === 0) {
+      // console.log('ping')
+    } else {
+      // console.log('pong')
+    }
 
     frameCount++
     frameCount %= 2
@@ -241,3 +259,10 @@ restartBtn.onclick = () => {
 
 document.querySelector('#app')!.appendChild(playpauseBtn)
 document.querySelector('#app')!.appendChild(restartBtn)
+
+const idleCallback = () => {
+  console.log('idle callback')
+  requestIdleCallback(idleCallback)
+}
+
+requestIdleCallback(idleCallback)
