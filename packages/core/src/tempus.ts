@@ -66,7 +66,7 @@ class Framerate {
   }[] = []
   fps: number | string
   time = 0
-  lastTickDate = performance.now()
+  lastTickDate = 0
   framesCount = 0
 
   constructor(fps: number | string = Number.POSITIVE_INFINITY) {
@@ -107,7 +107,13 @@ class Framerate {
 
     if (this.isRelativeFps) {
       if (this.framesCount === 0) {
+        // Frame-skipped buckets report the longer delta since they last ran;
+        // override on the shared state, then restore for the other buckets.
+        const frameDelta = state.deltaTime
+        state.deltaTime = state.time - this.lastTickDate
+        this.lastTickDate = state.time
         this.dispatch(state)
+        state.deltaTime = frameDelta
       }
 
       this.framesCount++

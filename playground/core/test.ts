@@ -69,15 +69,15 @@ animate(
 
 // // animation.play()
 
-// Tempus.add(
-//   () => {
-//     console.log('50%')
-//   },
-//   {
-//     fps: '50%',
-//     label: '50%',
-//   }
-// )
+Tempus.add(
+  ({ time, deltaTime }) => {
+    console.log('50%', time, deltaTime)
+  },
+  {
+    fps: '50%',
+    label: '50%',
+  }
+)
 
 Tempus.add(
   () => {
