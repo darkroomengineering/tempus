@@ -1,5 +1,6 @@
 import Tempus from 'tempus'
 import Lottie from 'lottie-web'
+import { animate } from 'motion'
 
 function isPrime(num: number) {
   if (num < 2) return false
@@ -19,10 +20,10 @@ function sumPrimes(limit: number) {
   return sum
 }
 
-function animate(time: number, deltaTime: number) {
-  // console.log('frame:10', time, deltaTime)
-  const result = sumPrimes(50000)
-}
+// function animate(time: number, deltaTime: number) {
+//   // console.log('frame:10', time, deltaTime)
+//   const result = sumPrimes(50000)
+// }
 
 Tempus.patch()
 
@@ -38,6 +39,26 @@ const animation = Lottie.loadAnimation({
   autoplay: true,
   path: '/lottie.json', // the path to the animation json
 })
+
+// motion.dev — Motion's frameloop captures `requestAnimationFrame` at
+// module-eval time (createRenderBatcher(requestAnimationFrame, ...)), so it
+// MUST be imported *dynamically, after* Tempus.patch() for its loop to be
+// absorbed. A static top-level `import` would bind the native rAF first and
+// the animation would never show up in the stats panel below.
+// import('motion').then(({ animate }) => {
+const box = document.createElement('div')
+box.style.cssText =
+  'width:60px;height:60px;background:#e0245e;border-radius:12px;margin:16px 0'
+document.querySelector('#app')!.appendChild(box)
+
+// Continuous animation keeps Motion scheduling frames every tick, so its
+// batched loop appears as `[patched] processBatch` in the stats panel.
+animate(
+  box,
+  { rotate: 360, scale: [1, 1.3, 1] },
+  { duration: 2, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }
+)
+// })
 
 // setTimeout(() => {
 //   animation.play()
@@ -120,14 +141,18 @@ Tempus.add(
   (elapsed, deltaTime) => {
     // console.log({ elapsed, deltaTime })
 
-    const instances = Object.values(Tempus.framerates)
-      .flatMap((framerate) =>
-        framerate.callbacks.map((callback) => ({
-          label: callback.label,
-          samples: callback.samples,
-          priority: callback.priority,
-        }))
-      )
+    // One unified feed: Tempus.add() callbacks and Tempus.patch()-absorbed
+    // loops, normalized to the same shape. Patched rows are prefixed so the
+    // source stays visible.
+    const instances = Tempus.inspect()
+      .map((callback) => ({
+        label:
+          callback.source === 'patch'
+            ? `[patched] ${callback.label}`
+            : callback.label,
+        samples: callback.samples,
+        priority: callback.priority,
+      }))
       .sort((a, b) => a.priority - b.priority)
 
     // instances.forEach((instance) => {
@@ -175,16 +200,22 @@ Tempus.add(
 
 let frameCount = 0
 
-Tempus.add((_, __, count) => {
-  // if (frameCount === 0) {
-  //   console.log('ping')
-  // } else {
-  //   console.log('pong')
-  // }
+Tempus.add(
+  (_, __, count) => {
+    // if (frameCount === 0) {
+    //   console.log('ping')
+    // } else {
+    //   console.log('pong')
+    // }
 
-  frameCount++
-  frameCount %= 2
-})
+    frameCount++
+    frameCount %= 2
+  },
+  {
+    label: 'ping pong',
+    priority: 2,
+  }
+)
 
 const playpauseBtn = document.createElement('button')
 playpauseBtn.textContent = 'Pause'

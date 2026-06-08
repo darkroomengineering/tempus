@@ -1,7 +1,12 @@
 // Infinity = max FPS (system default)
 
 import Clock from './clock'
-import type { TempusCallback, TempusOptions, UID } from './types'
+import type {
+  TempusCallback,
+  TempusCallbackInfo,
+  TempusOptions,
+  UID,
+} from './types'
 import { getUID } from './uid'
 import { version } from '../../../package.json'
 
@@ -26,6 +31,28 @@ function stopwatch(callback: () => void) {
   const now = performance.now()
   callback()
   return performance.now() - now
+}
+
+// How many recent per-frame durations to retain per callback — shared by both
+// Tempus.add() callbacks and loops absorbed by Tempus.patch() so timing is
+// sampled identically everywhere.
+const SAMPLE_WINDOW = 60
+
+// Record a per-frame duration in a rolling window, mutating in place.
+function pushSample(samples: number[], duration: number) {
+  samples.push(duration)
+  if (samples.length > SAMPLE_WINDOW) samples.shift()
+}
+
+// Drop an absorbed loop's row once it hasn't run for this many frames (it
+// stopped rescheduling), so dead loops disappear from the debug view.
+const PATCH_STALE_FRAMES = 120
+
+type PatchEntry = {
+  callback: FrameRequestCallback
+  label: string
+  samples: number[]
+  lastFrame: number
 }
 
 class Framerate {
@@ -75,8 +102,7 @@ class Framerate {
         }
       })
 
-      this.callbacks[i]!.samples?.push(duration)
-      this.callbacks[i]!.samples = this.callbacks[i]!.samples?.slice(-9)
+      pushSample(this.callbacks[i]!.samples, duration)
     }
   }
 
@@ -146,6 +172,13 @@ class TempusImpl {
   private patchedRAF?: typeof window.requestAnimationFrame
   private patchedCancelRAF?: typeof window.cancelAnimationFrame
   private flushUnsubscribe?: () => void
+  // Per-absorbed-callback timing, keyed by the callback identity so a
+  // self-rescheduling loop keeps one stable row across frames. The map and
+  // array hold the SAME entry objects — the array stays enumerable for the
+  // debug view, the map gives O(1) identity lookup.
+  private patchMeta = new WeakMap<FrameRequestCallback, PatchEntry>()
+  private patchEntries: PatchEntry[] = []
+  private patchAnonCount = 0
 
   constructor() {
     if (!isClient) return
@@ -254,13 +287,36 @@ class TempusImpl {
 
         // Pass a performance.now()-comparable timestamp, as the browser does.
         const now = performance.now()
+        const frame = this.frameCount
         for (const callback of batch) {
-          try {
-            callback(now)
-          } catch (error) {
-            console.error('Tempus.patch: rAF callback threw', error)
+          // Time each absorbed loop individually and attribute it to a stable
+          // row keyed by callback identity, so tempus/debug can break the
+          // single shim slot back down into per-loop cost.
+          let meta = this.patchMeta.get(callback)
+          if (!meta) {
+            meta = {
+              callback,
+              label: callback.name || `anonymous#${++this.patchAnonCount}`,
+              samples: [],
+              lastFrame: frame,
+            }
+            this.patchMeta.set(callback, meta)
+            this.patchEntries.push(meta)
           }
+
+          const duration = stopwatch(() => {
+            try {
+              callback(now)
+            } catch (error) {
+              console.error('Tempus.patch: rAF callback threw', error)
+            }
+          })
+
+          pushSample(meta.samples, duration)
+          meta.lastFrame = frame
         }
+
+        this.prunePatchEntries(frame)
       },
       { label: 'tempus' }
     )
@@ -295,7 +351,51 @@ class TempusImpl {
     this.rafQueue.clear()
     this.patchedRAF = undefined
     this.patchedCancelRAF = undefined
+    this.patchMeta = new WeakMap()
+    this.patchEntries = []
+    this.patchAnonCount = 0
     this.patched = false
+  }
+
+  // Drop rows for loops that stopped rescheduling, so they fall off the
+  // debug view instead of lingering as stale 0ms entries.
+  private prunePatchEntries(frame: number) {
+    for (let i = this.patchEntries.length - 1; i >= 0; i--) {
+      const entry = this.patchEntries[i]!
+      if (frame - entry.lastFrame > PATCH_STALE_FRAMES) {
+        this.patchMeta.delete(entry.callback)
+        this.patchEntries.splice(i, 1)
+      }
+    }
+  }
+
+  // Unified timing snapshot for tempus/debug: every Tempus.add() callback and
+  // every loop absorbed by Tempus.patch(), normalized to one shape. Samples
+  // are copied so consumers can't mutate live state.
+  inspect(): TempusCallbackInfo[] {
+    const added = Object.values(this.framerates).flatMap((framerate) =>
+      framerate.callbacks.map((callback) => ({
+        label: callback.label,
+        samples: callback.samples.slice(),
+        priority: callback.priority,
+        fps: framerate.fps,
+        idle: callback.idle,
+        source: 'add' as const,
+      }))
+    )
+
+    // Absorbed loops all run inside the single shim slot: every frame, never
+    // skipped, no individual priority.
+    const patched = this.patchEntries.map((entry) => ({
+      label: entry.label,
+      samples: entry.samples.slice(),
+      priority: 0,
+      fps: Number.POSITIVE_INFINITY,
+      idle: Number.POSITIVE_INFINITY,
+      source: 'patch' as const,
+    }))
+
+    return [...added, ...patched]
   }
 }
 
