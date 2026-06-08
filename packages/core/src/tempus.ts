@@ -7,10 +7,16 @@ import { version } from '../../../package.json'
 
 const isClient = typeof window !== 'undefined'
 
+// Bound so they can be called bare (`originalRAF(cb)`) without "Illegal
+// invocation" — native rAF requires `this === window` in some browsers.
 const originalRAF = (isClient &&
-  window.requestAnimationFrame) as typeof window.requestAnimationFrame
+  window.requestAnimationFrame.bind(
+    window
+  )) as typeof window.requestAnimationFrame
 const originalCancelRAF = (isClient &&
-  window.cancelAnimationFrame) as typeof window.cancelAnimationFrame
+  window.cancelAnimationFrame.bind(
+    window
+  )) as typeof window.cancelAnimationFrame
 
 if (isClient) {
   ;(window as any).tempusVersion = version
@@ -133,6 +139,14 @@ class TempusImpl {
   private rafId: number | undefined
   frameCount = 0
 
+  // patch() state
+  private patched = false
+  private rafQueue = new Map<number, FrameRequestCallback>()
+  private rafHandleId = 0
+  private patchedRAF?: typeof window.requestAnimationFrame
+  private patchedCancelRAF?: typeof window.cancelAnimationFrame
+  private flushUnsubscribe?: () => void
+
   constructor() {
     if (!isClient) return
 
@@ -141,7 +155,7 @@ class TempusImpl {
 
   restart() {
     if (this.rafId) {
-      cancelAnimationFrame(this.rafId)
+      originalCancelRAF(this.rafId)
     }
     this.frameCount = 0
 
@@ -159,13 +173,13 @@ class TempusImpl {
     if (!isClient || this.clock.isPlaying) return
 
     this.clock.play()
-    this.rafId = requestAnimationFrame(this.raf)
+    this.rafId = originalRAF(this.raf)
   }
 
   pause() {
     if (!isClient || !this.rafId || !this.clock.isPlaying) return
 
-    cancelAnimationFrame(this.rafId)
+    originalCancelRAF(this.rafId)
     this.rafId = undefined
     this.clock.pause()
   }
@@ -218,61 +232,70 @@ class TempusImpl {
 
     this.frameCount++
 
-    this.rafId = requestAnimationFrame(this.raf)
+    this.rafId = originalRAF(this.raf)
   }
 
   patch() {
-    if (!isClient) return
+    if (!isClient || this.patched) return
+    this.patched = true
 
-    window.requestAnimationFrame = (
-      callback,
-      { priority = 0, fps = Number.POSITIVE_INFINITY } = {}
-    ) => {
-      const stringifiedCallback = callback.toString()
+    // A single Tempus subscription drains the rAF queue once per frame.
+    // Every patched rAF callback is absorbed — no detection, no string
+    // matching, so minified/third-party/arrow/bound loops all work.
+    this.flushUnsubscribe = this.add(
+      () => {
+        if (this.rafQueue.size === 0) return
 
-      if (
-        (stringifiedCallback.includes(
-          `requestAnimationFrame(${callback.name})`
-        ) ||
-          stringifiedCallback.includes(
-            `requestAnimationFrame(this.${callback.name})`
-          )) &&
-        callback !== this.raf
-      ) {
-        // @ts-ignore
-        if (!callback.__tempusPatched) {
-          // @ts-ignore
-          callback.__tempusPatched = true
-          // @ts-ignore
-          callback.__tempusUnsubscribe = this.add(callback, {
-            priority,
-            fps,
-            label: callback.name,
-          })
+        // Snapshot then clear: callbacks that re-register during the flush
+        // run NEXT frame, matching native one-shot rAF semantics (so a tight
+        // requestAnimationFrame(loop) doesn't recurse synchronously forever).
+        const batch = Array.from(this.rafQueue.values())
+        this.rafQueue.clear()
+
+        // Pass a performance.now()-comparable timestamp, as the browser does.
+        const now = performance.now()
+        for (const callback of batch) {
+          try {
+            callback(now)
+          } catch (error) {
+            console.error('Tempus.patch: rAF callback threw', error)
+          }
         }
+      },
+      { label: 'tempus' }
+    )
 
-        // @ts-ignore
-        return callback.__tempusUnsubscribe
-      }
+    this.patchedRAF = ((callback: FrameRequestCallback): number => {
+      const id = ++this.rafHandleId
+      this.rafQueue.set(id, callback)
+      return id
+    }) as typeof window.requestAnimationFrame
+    window.requestAnimationFrame = this.patchedRAF
 
-      return originalRAF(callback)
-    }
-
-    window.cancelAnimationFrame = (callback: number | (() => void)) => {
-      if (typeof callback === 'function') {
-        callback?.()
-        return
-      }
-
-      return originalCancelRAF(callback)
-    }
+    this.patchedCancelRAF = ((handle: number): void => {
+      this.rafQueue.delete(handle)
+    }) as typeof window.cancelAnimationFrame
+    window.cancelAnimationFrame = this.patchedCancelRAF
   }
 
   unpatch() {
-    if (!isClient) return
+    if (!isClient || !this.patched) return
 
-    window.requestAnimationFrame = originalRAF
-    window.cancelAnimationFrame = originalCancelRAF
+    // Only restore if nobody else re-patched on top of us, otherwise we'd
+    // clobber their wrapper.
+    if (window.requestAnimationFrame === this.patchedRAF) {
+      window.requestAnimationFrame = originalRAF
+    }
+    if (window.cancelAnimationFrame === this.patchedCancelRAF) {
+      window.cancelAnimationFrame = originalCancelRAF
+    }
+
+    this.flushUnsubscribe?.()
+    this.flushUnsubscribe = undefined
+    this.rafQueue.clear()
+    this.patchedRAF = undefined
+    this.patchedCancelRAF = undefined
+    this.patched = false
   }
 }
 
