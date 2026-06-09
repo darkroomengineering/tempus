@@ -5,7 +5,8 @@
 // Concept: Tempus = tempo. One heartbeat (rAF), many instruments (callbacks),
 // kept in order (order) and in time (fps), racing one budget per frame.
 
-import Tempus from 'tempus'
+import Tempus, { type TempusState } from 'tempus'
+import { debug } from 'tempus/debug'
 
 // ---------------------------------------------------------------------------
 // Synthetic workloads. CPU cost is machine-dependent, so we calibrate a "cost
@@ -45,18 +46,79 @@ function burn(ms: number) {
 // Slider-driven extra load, 0..1.
 let load = 0
 
-// The "orchestra": a handful of callbacks at different orders and rates,
-// so the timeline has real structure to show.
-Tempus.add(() => burn(4.5), { label: 'render', order: 0 })
-Tempus.add(() => burn(3), { label: 'physics', order: -1 })
-Tempus.add(() => burn(2.5), { label: 'particles', order: 1, fps: 30 })
-Tempus.add(() => burn(1.5), { label: 'audio', order: 2, fps: '50%' })
-Tempus.add(
-  () => {
-    if (load > 0) burn(load * 12)
+// Each "instrument" exercises a different Tempus feature, so the page doubles
+// as a live feature tour. `feature` is the human label shown in the legend.
+type Demo = {
+  label: string
+  feature: string
+  order?: number
+  fps?: number | string
+  run: (state: TempusState) => void
+}
+
+const DEMOS: Demo[] = [
+  // order: lower runs first within a frame (like CSS `order`)
+  { label: 'physics', feature: 'runs first · order −1', order: -1, run: () => burn(2) },
+  { label: 'render', feature: 'order 0', order: 0, run: () => burn(3) },
+  // fps: throttle a callback to a fixed or relative rate
+  { label: 'audio', feature: 'relative rate · 50%', order: 1, fps: '50%', run: () => burn(1.5) },
+  { label: 'particles', feature: 'throttled · 30 fps', order: 2, fps: 30, run: () => burn(2) },
+  // state.frame: do work on alternating frames (ping/pong)
+  {
+    label: 'ping',
+    feature: 'alternates · frame % 2',
+    order: 3,
+    run: (s) => {
+      if (s.frame % 2 === 0) burn(0.8)
+    },
   },
-  { label: 'load', order: 3 }
-)
+  {
+    label: 'pong',
+    feature: 'alternates · frame % 2',
+    order: 3,
+    run: (s) => {
+      if (s.frame % 2 === 1) burn(0.8)
+    },
+  },
+  // live stress, driven by the LOAD slider
+  {
+    label: 'load',
+    feature: 'live stress · slider',
+    order: 4,
+    run: () => {
+      if (load > 0) burn(load * 12)
+    },
+  },
+  // state.budget(): only do optional work while there's frame time left. Runs
+  // last (highest order) so budget() reflects what every other channel used —
+  // crank LOAD and watch it yield.
+  {
+    label: 'idle',
+    feature: 'budget-gated · idle',
+    order: 5,
+    run: (s) => {
+      if (s.budget() > 7) burn(1.5)
+    },
+  },
+]
+
+for (const d of DEMOS) {
+  Tempus.add(d.run, { label: d.label, order: d.order, fps: d.fps })
+}
+
+// patch(): absorb a third-party-style native requestAnimationFrame loop so it
+// rides the same Tempus loop and appears in the timeline as `legacyRaf ⟳`.
+Tempus.patch()
+function legacyRaf() {
+  burn(1.2)
+  requestAnimationFrame(legacyRaf)
+}
+requestAnimationFrame(legacyRaf)
+
+// The stats panel: the real tempus/debug overlay, pinned top-right. It reads the
+// same live loop and renders the per-frame composition + per-channel timing, so
+// the page doesn't reinvent it.
+debug({ corner: 'top-right' })
 
 // ---------------------------------------------------------------------------
 // DOM refs
@@ -64,10 +126,6 @@ Tempus.add(
 
 const canvas = document.getElementById('scope') as HTMLCanvasElement
 const ctx = canvas.getContext('2d')!
-const compositionEl = document.getElementById('composition') as HTMLElement
-const fpsEl = document.getElementById('r-fps') as HTMLElement
-const frameEl = document.getElementById('r-frame') as HTMLElement
-const budgetEl = document.getElementById('r-budget') as HTMLElement
 const armEl = document.getElementById('metro-arm') as HTMLElement
 const loadInput = document.getElementById('load') as HTMLInputElement
 const toggleEl = document.getElementById('toggle') as HTMLButtonElement
@@ -77,7 +135,7 @@ loadInput.addEventListener('input', () => {
 })
 
 // Start/stop the single Tempus loop powering the whole page. When paused, every
-// callback (workloads, scope, readout) halts together — the seismograph freezes
+// callback (workloads, scope, debug) halts together — the seismograph freezes
 // mid-trace, which is the point: one switch governs all rAF on the page.
 function syncToggle() {
   const playing = Tempus.isPlaying
@@ -93,6 +151,9 @@ toggleEl.addEventListener('click', () => {
 syncToggle()
 
 const SCOPE_LABEL = 'tempus:scope'
+// Our own scope callback and the debug overlay's render callback shouldn't count
+// toward the budget the seismograph plots.
+const INTERNAL = new Set([SCOPE_LABEL, 'tempus:debug'])
 const DISPLAY_MAX = 1.5 // chart headroom: show up to 150% of budget
 
 // Brand palette, shared with tempus/debug.
@@ -103,11 +164,6 @@ function usageColor(pct: number) {
   if (pct > 1) return RED
   if (pct > 0.66) return AMBER
   return GREEN
-}
-function colorFor(label: string) {
-  let h = 0
-  for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) | 0
-  return `hsl(${Math.abs(h) % 360} 70% 55%)`
 }
 
 function lastSample(samples: number[]) {
@@ -179,7 +235,7 @@ Tempus.add(
     const budget = Tempus.frameBudget
     let total = 0
     for (const e of Tempus.inspect()) {
-      if (e.label === SCOPE_LABEL) continue
+      if (INTERNAL.has(e.label)) continue
       total += lastSample(e.samples)
     }
     drawScope(total / budget)
@@ -189,48 +245,6 @@ Tempus.add(
     armEl.style.transform = `rotate(${angle}deg)`
   },
   { order: Number.POSITIVE_INFINITY, label: SCOPE_LABEL }
-)
-
-// ---------------------------------------------------------------------------
-// Throttled: numeric readout + frame-composition bar (5x/sec is plenty)
-// ---------------------------------------------------------------------------
-
-Tempus.add(
-  () => {
-    const budget = Tempus.frameBudget
-
-    const entries = Tempus.inspect().filter((e) => e.label !== SCOPE_LABEL)
-    let total = 0
-    let offset = 0
-    let segs = ''
-    for (const e of entries) {
-      const d = lastSample(e.samples)
-      total += d
-    }
-    const span = Math.max(budget, total) || budget
-    for (const e of entries) {
-      const d = lastSample(e.samples)
-      const left = (offset / span) * 100
-      const width = (d / span) * 100
-      offset += d
-      const throttled = e.fps !== Number.POSITIVE_INFINITY
-      segs += `<i style="left:${left}%;width:${width}%;background:${colorFor(
-        e.label
-      )}"${throttled ? ' class="t"' : ''}></i>`
-    }
-    if (total > budget) {
-      const bl = (budget / span) * 100
-      segs += `<u style="left:${bl}%;width:${100 - bl}%"></u>`
-    }
-    compositionEl.innerHTML = segs
-
-    const usagePct = Math.round((total / budget) * 100)
-    fpsEl.textContent = String(Math.round(Tempus.fps ?? 0))
-    frameEl.textContent = String(Tempus.frameCount)
-    budgetEl.textContent = `${total.toFixed(1)}/${budget.toFixed(1)}ms`
-    budgetEl.style.color = usageColor(total / budget)
-  },
-  { fps: 5, order: Number.POSITIVE_INFINITY, label: 'tempus:readout' }
 )
 
 resize()

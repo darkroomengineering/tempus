@@ -82,8 +82,29 @@ const CSS = `
   gap: 10px;
   align-items: baseline;
   margin-bottom: 8px;
+  cursor: grab;
+  touch-action: none;
+}
+.tempus-debug.dragging { cursor: grabbing; }
+.tempus-debug.dragging .tempus-debug-head { cursor: grabbing; }
+.tempus-debug-toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e8e8ea;
+  font-size: 9px;
+  line-height: 1;
   cursor: pointer;
 }
+.tempus-debug-toggle:hover { background: rgba(255, 255, 255, 0.18); }
+.tempus-debug-toggle.paused { background: rgba(125, 220, 125, 0.22); color: #7ddc7d; }
 .tempus-debug-title { font-weight: 600; letter-spacing: 0.02em; }
 .tempus-debug-head .spacer { flex: 1; }
 .tempus-debug-head b { color: #fff; font-weight: 600; }
@@ -132,6 +153,13 @@ const CSS = `
 }
 .tempus-debug-list { display: flex; flex-direction: column; gap: 3px; }
 .tempus-debug-row { display: flex; align-items: center; gap: 7px; }
+.tempus-debug-order {
+  flex: none;
+  width: 22px;
+  text-align: right;
+  color: rgba(232, 232, 234, 0.45);
+  font-size: 10px;
+}
 .tempus-debug-dot {
   width: 8px;
   height: 8px;
@@ -182,6 +210,14 @@ function pctColor(pct: number) {
   return '#7ddc7d'
 }
 
+// Compact, readable `order` for the legend gutter. ±Infinity (used to force a
+// callback first/last) shows as ±∞ rather than a giant number.
+function formatOrder(order: number) {
+  if (order === Number.POSITIVE_INFINITY) return '∞'
+  if (order === Number.NEGATIVE_INFINITY) return '-∞'
+  return String(order)
+}
+
 export function debug(options: DebugOptions = {}): DebugHandle {
   if (!isClient) {
     // SSR-safe no-op so callers don't have to guard.
@@ -199,6 +235,7 @@ export function debug(options: DebugOptions = {}): DebugHandle {
   root.style.cssText = CORNERS[corner]
   root.innerHTML = `
     <div class="tempus-debug-head">
+      <button class="tempus-debug-toggle" data-toggle type="button"></button>
       <span class="tempus-debug-title">tempus</span>
       <span class="spacer"></span>
       <span class="tempus-debug-stat" data-fps></span>
@@ -214,15 +251,93 @@ export function debug(options: DebugOptions = {}): DebugHandle {
   container.appendChild(root)
 
   const head = root.querySelector('.tempus-debug-head') as HTMLElement
+  const toggleEl = root.querySelector('[data-toggle]') as HTMLButtonElement
   const fpsEl = root.querySelector('[data-fps]') as HTMLElement
   const usageEl = root.querySelector('[data-usage]') as HTMLElement
   const trackEl = root.querySelector('[data-track]') as HTMLElement
   const budgetEl = root.querySelector('[data-budget]') as HTMLElement
   const listEl = root.querySelector('[data-list]') as HTMLElement
 
-  head.addEventListener('click', () => root.classList.toggle('collapsed'))
+  // Drag the panel by its header. We switch to top/left positioning on first
+  // grab (the panel starts pinned to a corner via right/bottom), clamp to the
+  // viewport, and treat a press that never moves past a few px as a tap —
+  // which toggles collapse, preserving the old click-to-collapse behaviour.
+  const DRAG_THRESHOLD = 4 // px before a press counts as a drag, not a tap
+  let dragging = false
+  let moved = false
+  let startX = 0
+  let startY = 0
+  let originLeft = 0
+  let originTop = 0
+
+  const onPointerDown = (e: PointerEvent) => {
+    if (e.button !== 0) return
+    const rect = root.getBoundingClientRect()
+    // Pin via left/top from here on so right/bottom corners don't fight us.
+    originLeft = rect.left
+    originTop = rect.top
+    startX = e.clientX
+    startY = e.clientY
+    dragging = true
+    moved = false
+    head.setPointerCapture(e.pointerId)
+  }
+
+  const onPointerMove = (e: PointerEvent) => {
+    if (!dragging) return
+    const dx = e.clientX - startX
+    const dy = e.clientY - startY
+    if (!moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+    if (!moved) {
+      moved = true
+      root.classList.add('dragging')
+      root.style.right = 'auto'
+      root.style.bottom = 'auto'
+    }
+    // Clamp so the panel can't be dragged fully off-screen.
+    const maxLeft = window.innerWidth - root.offsetWidth
+    const maxTop = window.innerHeight - root.offsetHeight
+    const left = Math.min(Math.max(originLeft + dx, 0), Math.max(0, maxLeft))
+    const top = Math.min(Math.max(originTop + dy, 0), Math.max(0, maxTop))
+    root.style.left = `${left}px`
+    root.style.top = `${top}px`
+  }
+
+  const onPointerUp = (e: PointerEvent) => {
+    if (!dragging) return
+    dragging = false
+    root.classList.remove('dragging')
+    if (head.hasPointerCapture(e.pointerId)) head.releasePointerCapture(e.pointerId)
+    // A press that never crossed the threshold is a tap → toggle collapse.
+    if (!moved) root.classList.toggle('collapsed')
+  }
+
+  head.addEventListener('pointerdown', onPointerDown)
+  head.addEventListener('pointermove', onPointerMove)
+  head.addEventListener('pointerup', onPointerUp)
+  head.addEventListener('pointercancel', onPointerUp)
+
+  // Start/stop the whole Tempus loop. Reflect the live state on every render
+  // tick too, so the button stays correct if play/pause happens elsewhere.
+  const syncToggle = () => {
+    const playing = Tempus.isPlaying
+    toggleEl.textContent = playing ? '⏸' : '▶'
+    toggleEl.classList.toggle('paused', !playing)
+    toggleEl.setAttribute('aria-label', playing ? 'Stop the loop' : 'Start the loop')
+  }
+  toggleEl.addEventListener('click', (e) => {
+    e.stopPropagation()
+    if (Tempus.isPlaying) Tempus.pause()
+    else Tempus.play()
+    // render() is part of the loop, so it won't fire while paused — update now.
+    syncToggle()
+  })
+  // Keep button presses from starting a header drag / collapse toggle.
+  toggleEl.addEventListener('pointerdown', (e) => e.stopPropagation())
+  syncToggle()
 
   const render = () => {
+    syncToggle()
     const budget = Tempus.frameBudget
 
     const entries = Tempus.inspect()
@@ -284,6 +399,9 @@ export function debug(options: DebugOptions = {}): DebugHandle {
       .map((e) => {
         const pct = (e.duration / budget) * 100
         return `<div class="tempus-debug-row">
+          <span class="tempus-debug-order" title="order ${formatOrder(
+            e.order
+          )}">${formatOrder(e.order)}</span>
           <span class="tempus-debug-dot" style="background:${e.color}"></span>
           <span class="tempus-debug-label">${e.label}</span>
           ${

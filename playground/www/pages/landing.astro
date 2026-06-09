@@ -21,13 +21,8 @@ import Layout from '../layouts/Layout.astro'
     </p>
   </section>
 
-  <div class="composition" id="composition" aria-hidden="true"></div>
-
-  <footer class="readout">
-    <div class="stat"><span class="k">fps</span><span class="v" id="r-fps">—</span></div>
-    <div class="stat"><span class="k">frame</span><span class="v" id="r-frame">—</span></div>
-    <div class="stat"><span class="k">budget</span><span class="v" id="r-budget">—</span></div>
-    <label class="stat load">
+  <footer class="controls">
+    <label class="load">
       <span class="k">load</span>
       <input id="load" type="range" min="0" max="100" value="0" />
     </label>
@@ -159,38 +154,8 @@ import Layout from '../layouts/Layout.astro'
     background: #f4f4f5;
   }
 
-  /* ---- live frame-composition bar ---- */
-  .composition {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 84px;
-    z-index: 3;
-    height: 6px;
-    overflow: hidden;
-  }
-  .composition :global(i) {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.4);
-  }
-  .composition :global(i.t) {
-    background-image: repeating-linear-gradient(
-      -45deg,
-      rgba(255, 255, 255, 0.22) 0 4px,
-      transparent 4px 8px
-    );
-  }
-  .composition :global(u) {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    background: rgba(255, 77, 77, 0.25);
-  }
-
-  /* ---- readout ---- */
-  .readout {
+  /* ---- controls ---- */
+  .controls {
     position: fixed;
     left: 0;
     right: 0;
@@ -198,34 +163,30 @@ import Layout from '../layouts/Layout.astro'
     z-index: 3;
     display: flex;
     align-items: center;
-    gap: clamp(1.5rem, 5vw, 4rem);
+    gap: clamp(1rem, 3vw, 2rem);
     padding: 14px clamp(1rem, 4vw, 2.5rem) 16px;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-variant-numeric: tabular-nums;
     background: linear-gradient(transparent, rgba(7, 7, 10, 0.85) 40%);
   }
-  .stat {
+  .load {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    gap: 10px;
   }
-  .stat .k {
+  .load .k {
     font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 0.2em;
     color: rgba(244, 244, 245, 0.4);
   }
-  .stat .v {
-    font-size: 1.5rem;
-    font-weight: 600;
-  }
-  .load {
-    margin-left: auto;
-  }
   .load input {
     width: clamp(120px, 18vw, 220px);
     accent-color: #ffb000;
     cursor: pointer;
+  }
+  .toggle {
+    margin-left: auto;
   }
 
   .toggle {
