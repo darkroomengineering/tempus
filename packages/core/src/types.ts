@@ -12,6 +12,10 @@ export type TempusState = {
 export type TempusCallback = (state: TempusState) => void
 
 export type TempusOptions = {
+  // Sort key for execution order within a frame — lower runs first, like CSS
+  // `order`. Default 0. Negative values run before the default, positive after.
+  order?: number
+  /** @deprecated Use `order` instead. Kept as an alias for backwards compat. */
   priority?: number
   fps?: number | string
   label?: string
@@ -25,7 +29,7 @@ export type UID = number
 export type TempusCallbackInfo = {
   label: string
   samples: number[]
-  priority: number
+  order: number
   fps: number | string
   source: 'add' | 'patch'
 }

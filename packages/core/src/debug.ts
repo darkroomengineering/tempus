@@ -199,7 +199,7 @@ export function debug(options: DebugOptions = {}): DebugHandle {
   root.style.cssText = CORNERS[corner]
   root.innerHTML = `
     <div class="tempus-debug-head">
-      <span class="tempus-debug-title">tempus · HMR OK</span>
+      <span class="tempus-debug-title">tempus</span>
       <span class="spacer"></span>
       <span class="tempus-debug-stat" data-fps></span>
       <span class="tempus-debug-stat" data-usage></span>
@@ -235,7 +235,7 @@ export function debug(options: DebugOptions = {}): DebugHandle {
         return {
           label: entry.source === 'patch' ? `${entry.label} ⟳` : entry.label,
           duration,
-          priority: entry.priority,
+          order: entry.order,
           throttled: entry.fps !== Number.POSITIVE_INFINITY,
           fps: entry.fps,
           color: colorFor(entry.label),
@@ -277,10 +277,10 @@ export function debug(options: DebugOptions = {}): DebugHandle {
     segHTML += `<div class="tempus-debug-budget" style="left:${budgetLeft}%"></div>`
     trackEl.innerHTML = segHTML
 
-    // Legend / detail list, ordered by priority (low → high, i.e. the order
+    // Legend / detail list, ordered by `order` (low → high, i.e. the order
     // callbacks run). The timeline above keeps true execution order.
     listEl.innerHTML = [...entries]
-      .sort((a, b) => a.priority - b.priority)
+      .sort((a, b) => a.order - b.order)
       .map((e) => {
         const pct = (e.duration / budget) * 100
         return `<div class="tempus-debug-row">
@@ -302,11 +302,11 @@ export function debug(options: DebugOptions = {}): DebugHandle {
       .join('')
   }
 
-  // Run last (priority Infinity) so we snapshot after every other callback has
+  // Run last (order Infinity) so we snapshot after every other callback has
   // executed this frame. Throttled to keep the panel cheap.
   const unsubscribe = Tempus.add(render, {
     fps,
-    priority: Number.POSITIVE_INFINITY,
+    order: Number.POSITIVE_INFINITY,
     label: DEBUG_LABEL,
   })
 

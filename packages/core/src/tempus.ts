@@ -59,7 +59,7 @@ type PatchEntry = {
 class Framerate {
   callbacks: {
     callback: TempusCallback
-    priority: number
+    order: number
     uid: UID
     label: string
     samples: number[]
@@ -137,11 +137,11 @@ class Framerate {
 
   add({
     callback,
-    priority,
+    order,
     label,
   }: {
     callback: TempusCallback
-    priority: number
+    order: number
     label: string
   }) {
     if (typeof callback !== 'function') {
@@ -150,8 +150,8 @@ class Framerate {
     }
 
     const uid = getUID()
-    this.callbacks.push({ callback, priority, uid, label, samples: [] })
-    this.callbacks.sort((a, b) => a.priority - b.priority)
+    this.callbacks.push({ callback, order, uid, label, samples: [] })
+    this.callbacks.sort((a, b) => a.order - b.order)
 
     return () => this.remove(uid)
   }
@@ -253,19 +253,24 @@ class TempusImpl {
   add(
     callback: TempusCallback,
     {
-      priority = 0,
+      order,
+      priority,
       fps = Number.POSITIVE_INFINITY,
       label = '',
     }: TempusOptions = {}
   ) {
     if (!isClient) return
 
+    // `priority` is the deprecated alias for `order`; `order` wins when both
+    // are set, otherwise fall back through priority to the default 0.
+    const resolvedOrder = order ?? priority ?? 0
+
     if (
       typeof fps === 'number' ||
       (typeof fps === 'string' && fps.endsWith('%'))
     ) {
       if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps)
-      return this.framerates[fps].add({ callback, priority, label })
+      return this.framerates[fps].add({ callback, order: resolvedOrder, label })
     }
 
     console.warn('Tempus.add: fps is not a number or a string ending with "%"')
@@ -410,18 +415,18 @@ class TempusImpl {
       framerate.callbacks.map((callback) => ({
         label: callback.label,
         samples: callback.samples.slice(),
-        priority: callback.priority,
+        order: callback.order,
         fps: framerate.fps,
         source: 'add' as const,
       }))
     )
 
     // Absorbed loops all run inside the single shim slot: every frame, never
-    // skipped, no individual priority.
+    // skipped, no individual order.
     const patched = this.patchEntries.map((entry) => ({
       label: entry.label,
       samples: entry.samples.slice(),
-      priority: 0,
+      order: 0,
       fps: Number.POSITIVE_INFINITY,
       source: 'patch' as const,
     }))

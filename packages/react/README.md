@@ -17,7 +17,7 @@ function App() {
 ```js
 useTempus(() => {}, { 
   fps: 30, // Will run at 30 FPS
-  priority: -1, // Will run before other animations
+  order: -1, // Will run before other animations (lower runs first)
 })
 ```
 

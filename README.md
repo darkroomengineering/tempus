@@ -14,7 +14,7 @@
 ## Features
 
 - **One shared rAF loop** — merges every requestAnimationFrame call into a single loop to cut per-frame overhead
-- **Priority ordering** — run animations in an explicit order each frame instead of registration order
+- **Explicit ordering** — run animations in an explicit order each frame instead of registration order
 - **Custom frame rates** — throttle callbacks to a target FPS independent of the display refresh
 - **Frame budget** — every callback gets `state.budget()` (ms left this frame) to gracefully skip or chunk work
 - **Library-friendly** — drop-in compatible with GSAP, Lenis, and other animation tools
@@ -87,21 +87,23 @@ Tempus.add(animate, {
 })
 ```
 
-### Priority System
+### Order System
+
+`order` is a sort key for execution within a frame — lower runs first, exactly like CSS `order`. Default is `0`; negative values run before it, positive after.
 
 `——[-Infinity]——[0]——[Infinity]——> execution order`
 
 
 #### Input
 ```javascript
-// Default priority: 0 (runs second)
+// Default order: 0 (runs second)
 Tempus.add(() => console.log('animate'))
 
-// Priority: 1 (runs third)
-Tempus.add(() => console.log('render'), { priority: 1 })
+// Order: 1 (runs third)
+Tempus.add(() => console.log('render'), { order: 1 })
 
-// Priority: -1 (runs first)
-Tempus.add(() => console.log('scroll'), { priority: -1 })
+// Order: -1 (runs first)
+Tempus.add(() => console.log('scroll'), { order: -1 })
 ```
 #### Output
 
@@ -177,7 +179,7 @@ Tempus.add(({ time }) => {
 ```javascript
 Tempus.add(() => {
   renderer.render(scene, camera)
-}, { priority: 1 })
+}, { order: 1 })
 // the render will happen after other rafs
 // so it can be synched with lenis for instance
 ```
@@ -194,7 +196,8 @@ Adds an animation callback to the loop.
   - `frame`: `number` - Frame counter
   - `budget`: `() => number` - Call it for the ms left in the current frame before exceeding the budget (live)
 - **options**:
-  - `priority`: `number` (default: 0) - Lower numbers run first
+  - `order`: `number` (default: 0) - Sort key for execution order; lower runs first (like CSS `order`)
+  - `priority`: `number` - **Deprecated** alias for `order`
   - `fps`: `number` (default: Infinity) - Target frame rate
 - **Returns**: `() => void` - Unsubscribe function
 
@@ -212,7 +215,7 @@ Unpatches the native `requestAnimationFrame` to use the original one.
 
 ## Best Practices
 
-- Use priorities wisely: critical animations (like scroll) should have higher priority
+- Order callbacks deliberately: things others depend on (like scroll) should run first — give them a lower `order` (e.g. `-1`)
 - Clean up animations when they're no longer needed
 - Consider using specific FPS for non-critical animations to improve performance (e.g: collisions)
 - Gate optional or expensive work on `state.budget()` so it yields when the frame is full

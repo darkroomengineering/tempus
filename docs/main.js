@@ -17,9 +17,9 @@ function onFrame(time, deltaTime) {
   rAFID = requestAnimationFrame(onFrame)
 }
 
-// const unsubscribe = Tempus.add(onFrame, { priority: 0 }) // max FPS, will executed before priority: 1
-// const unsubscribe = Tempus.add(onFrame, { priority: 1 }) // max FPS, will executed after priority: 0
-// Tempus.add(onFrame, { priority: 0, fps: 30 }) // 30 FPS, (e.g. playing frame sequence)
+// const unsubscribe = Tempus.add(onFrame, { order: 0 }) // max FPS, will executed before order: 1
+// const unsubscribe = Tempus.add(onFrame, { order: 1 }) // max FPS, will executed after order: 0
+// Tempus.add(onFrame, { order: 0, fps: 30 }) // 30 FPS, (e.g. playing frame sequence)
 
 rAFID = requestAnimationFrame(onFrame)
 

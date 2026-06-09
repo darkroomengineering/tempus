@@ -98,7 +98,7 @@ Tempus.add(
 //     console.log('webgl:render')
 //   },
 //   {
-//     priority: 1,
+//     order: 1,
 //     label: 'webgl:render',
 //   }
 // )
@@ -136,7 +136,7 @@ Tempus.add(
 )
 
 Tempus.add(_animate, {
-  priority: -1,
+  order: -1,
   label: 'lenis',
 })
 
@@ -164,7 +164,7 @@ requestAnimationFrame(slider)
 
 // Live frame-composition overlay: a budget timeline with one ordered segment
 // per rAF, each sized to its share of the frame budget.
-debug()
+debug({ corner: 'top-right' })
 
 Tempus.add(
   ({ frame }) => {
@@ -177,7 +177,7 @@ Tempus.add(
   },
   {
     label: 'ping pong',
-    priority: 2,
+    order: 2,
   }
 )
 
