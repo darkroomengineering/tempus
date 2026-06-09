@@ -1,4 +1,5 @@
 import Tempus from 'tempus'
+import { debug } from 'tempus/debug'
 import Lottie from 'lottie-web'
 import { animate } from 'motion'
 
@@ -104,7 +105,7 @@ Tempus.add(
 
 Tempus.add(
   () => {
-    sumPrimes(100030)
+    sumPrimes(10030)
   },
   {
     label: 'physics',
@@ -116,13 +117,18 @@ Tempus.add(
 // option needed. `budget` is live, so you can loop until it runs out.
 Tempus.add(
   (state) => {
-    let chunks = 0
-    console.log('budget', state.budget())
-    while (state.budget() > 0) {
-      sumPrimes(2000)
-      chunks++
+    // let chunks = 0
+    // console.log('budget', state.budget())
+    // while (state.budget() > 5) {
+    //   console.log(state.budget())
+    //   sumPrimes(2000)
+    //   chunks++
+    // }
+    // if (chunks) console.log('idle:work ran', chunks, 'chunks')
+
+    if (state.budget() > 5) {
+      console.log('idle work')
     }
-    if (chunks) console.log('idle:work ran', chunks, 'chunks')
   },
   {
     label: 'idle:work',
@@ -156,66 +162,9 @@ const slider = () => {
 
 requestAnimationFrame(slider)
 
-Tempus.add(
-  () => {
-    // One unified feed: Tempus.add() callbacks and Tempus.patch()-absorbed
-    // loops, normalized to the same shape. Patched rows are prefixed so the
-    // source stays visible.
-    const instances = Tempus.inspect()
-      .map((callback) => ({
-        label:
-          callback.source === 'patch'
-            ? `[patched] ${callback.label}`
-            : callback.label,
-        samples: callback.samples,
-        priority: callback.priority,
-      }))
-      .sort((a, b) => a.priority - b.priority)
-
-    // instances.forEach((instance) => {
-    //   console.log(instance.label, instance.samples)
-    // })
-
-    document.querySelector('#stats')!.innerHTML = instances
-      .map((instance, index) => {
-        // let duration = instance.samples.at(-1)
-        const duration =
-          instance.samples.reduce((acc, curr) => acc + curr, 0) /
-          instance.samples.length
-
-        // if (typeof duration === 'number') {
-        //   duration = duration.toFixed(2)
-        // }
-
-        const min = Math.min(...instance.samples).toFixed(2)
-        const max = Math.max(...instance.samples).toFixed(2)
-
-        const pourcent = Math.round(
-          (duration / (1000 / (Tempus?.fps ?? 0))) * 100
-        )
-
-        return `<div>${index + 1}. ${instance.label}: <span style="color: ${
-          pourcent > 10 ? (pourcent > 25 ? 'red' : 'orange') : 'green'
-        }">${duration.toFixed(2)}ms</span> (${min} - ${max}) (${pourcent}%)</div>`
-      })
-      .join('\n')
-
-    document.querySelector('#stats')!.innerHTML +=
-      `<br/><div>fps: ${Math.round(Tempus?.fps ?? 0)} (${Math.floor(
-        Tempus.usage * 100
-      )}%)</div>
-      <div>elapsed: ${Tempus.clock.time.toFixed(2)}</div>
-      <div>delta: ${Tempus.clock.deltaTime.toFixed(2)}</div>
-      <div>frameCount: ${Tempus.frameCount}</div><br/>`
-  },
-  {
-    fps: 2,
-    priority: Number.POSITIVE_INFINITY,
-    label: 'debug',
-  }
-)
-
-let frameCount = 0
+// Live frame-composition overlay: a budget timeline with one ordered segment
+// per rAF, each sized to its share of the frame budget.
+debug()
 
 Tempus.add(
   ({ frame }) => {
@@ -225,9 +174,6 @@ Tempus.add(
     } else {
       // console.log('pong')
     }
-
-    frameCount++
-    frameCount %= 2
   },
   {
     label: 'ping pong',

@@ -36,11 +36,13 @@ function makeBuildOptions(
 export const coreESMOptions = makeBuildOptions('tempus', 'packages/core/index.ts', 'esm')
 const coreBrowserOptions = makeBuildOptions('tempus', 'packages/core/browser.ts', 'browser', { dts: false })
 
+const debugOptions = makeBuildOptions('tempus-debug', 'packages/core/debug.ts', 'esm')
+
 const reactOptions = makeBuildOptions('tempus-react', 'packages/react/index.ts', 'esm', {
   banner: { js: '"use client";' },
 })
 
 export default defineConfig(() => {
   console.log(`\x1b[31mLNS\x1b[0m\x1b[1m Building all packages\x1b[0m\n`)
-  return [...coreESMOptions, ...coreBrowserOptions, ...reactOptions]
+  return [...coreESMOptions, ...coreBrowserOptions, ...debugOptions, ...reactOptions]
 })
