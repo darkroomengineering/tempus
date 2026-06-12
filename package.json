@@ -17,9 +17,9 @@
       "types": "./dist/tempus-react.d.ts",
       "default": "./dist/tempus-react.mjs"
     },
-    "./debug": {
-      "types": "./dist/tempus-debug.d.ts",
-      "default": "./dist/tempus-debug.mjs"
+    "./profiler": {
+      "types": "./dist/tempus-profiler.d.ts",
+      "default": "./dist/tempus-profiler.mjs"
     },
     "./dist/*": "./dist/*"
   },

@@ -15,7 +15,7 @@
     "jsx": "react-jsx",
 
     /* Resolve the package's own name to source so modules that must import the
-       shared singleton via 'tempus' (e.g. debug) typecheck and emit d.ts. The
+       shared singleton via 'tempus' (e.g. profiler) typecheck and emit d.ts. The
        bundler still treats 'tempus' as external at build time. */
     "baseUrl": ".",
     "paths": { "tempus": ["packages/core/index.ts"] },

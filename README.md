@@ -8,15 +8,20 @@
 
 ## Packages
 
-- [tempus](./README.md)
-- [tempus/react](./packages/react/README.md)
+- [tempus](./README.md) — core loop
+- [tempus/react](./packages/react/README.md) — React bindings (`useTempus`, `ReactTempus`)
+- [tempus/profiler](#profiler-overlay) — live frame-budget overlay
 
 ## Features
 
 - **One shared rAF loop** — merges every requestAnimationFrame call into a single loop to cut per-frame overhead
 - **Explicit ordering** — run animations in an explicit order each frame instead of registration order
-- **Custom frame rates** — throttle callbacks to a target FPS independent of the display refresh
+- **Custom frame rates** — throttle callbacks to a target FPS (absolute like `30`, or relative like `'50%'`) independent of the display refresh
 - **Frame budget** — every callback gets `state.budget()` (ms left this frame) to gracefully skip or chunk work
+- **Playback control** — `play()`, `pause()` and `restart()` the whole loop at once
+- **rAF patching** — `patch()` absorbs every native `requestAnimationFrame` (including third-party and minified loops) into the shared loop
+- **Live profiler overlay** — `tempus/profiler` draws a real-time timeline of how each callback fills the frame budget
+- **Introspection** — `Tempus.inspect()` exposes per-callback timing for added and patched loops alike
 - **Library-friendly** — drop-in compatible with GSAP, Lenis, and other animation tools
 - **Zero dependencies** — no external packages, nothing extra to audit
 - **~1KB gzipped** — a negligible footprint for a core primitive
@@ -154,6 +159,47 @@ Tempus.add(({ frame }) => {
 // Patch native requestAnimationFrame across all your app
 Tempus.patch()
 // Now any requestAnimationFrame recursive calls will use Tempus
+
+// Restore the original requestAnimationFrame when you're done
+Tempus.unpatch()
+```
+
+Patching absorbs **every** native `requestAnimationFrame` call — including loops inside third-party and minified libraries — into the single shared loop, with no name detection or string matching. Re-registering callbacks run on the next frame (matching native one-shot rAF semantics), and a throwing callback is caught and logged so it can't take down the rest of the frame.
+
+### Labelling Callbacks
+
+Give a callback a `label` so it's easy to identify in the [profiler overlay](#profiler-overlay) and in `Tempus.inspect()`:
+
+```javascript
+Tempus.add(animate, { label: 'hero-parallax' })
+```
+
+### Profiler Overlay
+
+`tempus/profiler` mounts a live, draggable overlay that visualises how a single frame is composed. It lays every callback — both `Tempus.add()` callbacks and loops absorbed by `Tempus.patch()` — end-to-end on a timeline whose full width is the per-frame budget (`1000 / Tempus.targetFps`), so you can watch the frame fill up and overflow in real time.
+
+```javascript
+import { profiler } from 'tempus/profiler'
+
+const overlay = profiler({
+  corner: 'top-left', // 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+  fps: 5,             // overlay refresh rate (the measurements it shows are unaffected)
+  container: document.body, // mount target
+})
+
+// later
+overlay.destroy()
+```
+
+The panel shows live FPS and budget usage in its header, a colour-coded timeline (throttled callbacks are hatched, the over-budget region is highlighted in red), and a per-callback legend with its `order`, target FPS and average cost. Click the header to collapse it, drag it to reposition, or use the play/pause button to start and stop the whole loop. It's SSR-safe — on the server `profiler()` returns a no-op handle.
+
+### Introspection
+
+`Tempus.inspect()` returns a normalized timing snapshot of every active callback — added and patched alike — which is what powers the profiler overlay:
+
+```javascript
+Tempus.inspect()
+// [{ label, samples, order, fps, source: 'add' | 'patch' }, ...]
 ```
 
 ## Integration Examples
@@ -198,20 +244,64 @@ Adds an animation callback to the loop.
 - **options**:
   - `order`: `number` (default: 0) - Sort key for execution order; lower runs first (like CSS `order`)
   - `priority`: `number` - **Deprecated** alias for `order`
-  - `fps`: `number` (default: Infinity) - Target frame rate
+  - `fps`: `number | string` (default: Infinity) - Target frame rate. A number throttles to that absolute FPS; a string like `'50%'` runs at a fraction of the system frame rate
+  - `label`: `string` - Optional name shown in `Tempus.inspect()` and the profiler overlay
 - **Returns**: `() => void` - Unsubscribe function
+
+### Tempus.play()
+
+Starts (or resumes) the loop. The loop auto-starts on the client when Tempus is imported.
+
+### Tempus.pause()
+
+Stops the loop; no callbacks run until `play()` is called.
+
+### Tempus.restart()
+
+Resets the clock's elapsed time to `0` and resumes the loop.
+
+### Tempus.isPlaying
+
+`boolean` - Whether the loop is currently running.
 
 ### Tempus.targetFps
 
 `number` (default: `60`). The frame rate `state.budget()` is measured against — the budget per frame is `1000 / Tempus.targetFps` ms.
 
+### Tempus.fps
+
+`number` - The live measured frame rate (`1000 / deltaTime`) of the most recent frame.
+
+### Tempus.usage
+
+`number` - Fraction of the last frame's delta spent inside Tempus callbacks (`duration / deltaTime`).
+
+### Tempus.inspect()
+
+Returns a `TempusCallbackInfo[]` timing snapshot of every active callback (both `Tempus.add()` callbacks and loops absorbed by `patch()`):
+
+- `label`: `string`
+- `samples`: `number[]` - recent per-frame durations in ms
+- `order`: `number`
+- `fps`: `number | string`
+- `source`: `'add' | 'patch'`
+
 ### Tempus.patch()
 
-Patches the native `requestAnimationFrame` to use Tempus.
+Patches the native `requestAnimationFrame` to route every call through Tempus's single loop.
 
 ### Tempus.unpatch()
 
-Unpatches the native `requestAnimationFrame` to use the original one.
+Restores the original native `requestAnimationFrame` and `cancelAnimationFrame`.
+
+### profiler(options)
+
+`import { profiler } from 'tempus/profiler'` — mounts the live frame-budget overlay and returns a `{ element, destroy }` handle.
+
+- **options**:
+  - `corner`: `'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'` (default: `'top-left'`) - where to pin the panel
+  - `fps`: `number` (default: `5`) - overlay refresh rate
+  - `container`: `HTMLElement` (default: `document.body`) - mount target
 
 ## Best Practices
 

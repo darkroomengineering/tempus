@@ -6,7 +6,7 @@
 // kept in order (order) and in time (fps), racing one budget per frame.
 
 import Tempus, { type TempusState } from 'tempus'
-import { debug } from 'tempus/debug'
+import { profiler } from 'tempus/profiler'
 
 // ---------------------------------------------------------------------------
 // Synthetic workloads. CPU cost is machine-dependent, so we calibrate a "cost
@@ -115,10 +115,10 @@ function legacyRaf() {
 }
 requestAnimationFrame(legacyRaf)
 
-// The stats panel: the real tempus/debug overlay, pinned top-right. It reads the
-// same live loop and renders the per-frame composition + per-channel timing, so
-// the page doesn't reinvent it.
-debug({ corner: 'top-right' })
+// The stats panel: the real tempus/profiler overlay, pinned top-right. It reads
+// the same live loop and renders the per-frame composition + per-channel timing,
+// so the page doesn't reinvent it.
+profiler({ corner: 'top-right' })
 
 // ---------------------------------------------------------------------------
 // DOM refs
@@ -135,7 +135,7 @@ loadInput.addEventListener('input', () => {
 })
 
 // Start/stop the single Tempus loop powering the whole page. When paused, every
-// callback (workloads, scope, debug) halts together — the seismograph freezes
+// callback (workloads, scope, profiler) halts together — the seismograph freezes
 // mid-trace, which is the point: one switch governs all rAF on the page.
 function syncToggle() {
   const playing = Tempus.isPlaying
@@ -151,12 +151,12 @@ toggleEl.addEventListener('click', () => {
 syncToggle()
 
 const SCOPE_LABEL = 'tempus:scope'
-// Our own scope callback and the debug overlay's render callback shouldn't count
-// toward the budget the seismograph plots.
-const INTERNAL = new Set([SCOPE_LABEL, 'tempus:debug'])
+// Our own scope callback and the profiler overlay's render callback shouldn't
+// count toward the budget the seismograph plots.
+const INTERNAL = new Set([SCOPE_LABEL, 'tempus:profiler'])
 const DISPLAY_MAX = 1.5 // chart headroom: show up to 150% of budget
 
-// Brand palette, shared with tempus/debug.
+// Brand palette, shared with tempus/profiler.
 const GREEN = '#7ddc7d'
 const AMBER = '#ffb000'
 const RED = '#ff5b5b'

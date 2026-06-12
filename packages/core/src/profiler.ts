@@ -1,4 +1,4 @@
-// tempus/debug — a live overlay that shows how a frame is composed.
+// tempus/profiler — a live overlay that shows how a frame is composed.
 //
 // It reads Tempus.inspect() (every Tempus.add() callback + every loop absorbed
 // by Tempus.patch(), in execution order) and lays each one out on a single
@@ -11,23 +11,23 @@
 // make tsup inline a second copy whose framerates are always empty.
 import Tempus from 'tempus'
 
-export type DebugCorner =
+export type ProfilerCorner =
   | 'top-left'
   | 'top-right'
   | 'bottom-left'
   | 'bottom-right'
 
-export type DebugOptions = {
+export type ProfilerOptions = {
   // Overlay refresh rate. Kept low so the panel itself stays cheap; the
   // measurements it shows are unaffected (they come from Tempus.inspect()).
   fps?: number
   // Where to pin the panel. Default 'top-left'.
-  corner?: DebugCorner
+  corner?: ProfilerCorner
   // Mount target. Defaults to document.body.
   container?: HTMLElement
 }
 
-export type DebugHandle = {
+export type ProfilerHandle = {
   element: HTMLElement
   destroy: () => void
 }
@@ -36,11 +36,11 @@ const isClient = typeof window !== 'undefined'
 
 // Our own render callback shows up in inspect() like any other — tag it so we
 // can filter it back out of the timeline.
-const DEBUG_LABEL = 'tempus:debug'
+const PROFILER_LABEL = 'tempus:profiler'
 
-const STYLE_ID = 'tempus-debug-style'
+const STYLE_ID = 'tempus-profiler-style'
 
-const CORNERS: Record<DebugCorner, string> = {
+const CORNERS: Record<ProfilerCorner, string> = {
   'top-left': 'top:12px;left:12px;',
   'top-right': 'top:12px;right:12px;',
   'bottom-left': 'bottom:12px;left:12px;',
@@ -62,7 +62,7 @@ function colorFor(label: string) {
 }
 
 const CSS = `
-.tempus-debug {
+.tempus-profiler {
   position: fixed;
   z-index: 2147483647;
   width: 320px;
@@ -77,7 +77,7 @@ const CSS = `
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
   user-select: none;
 }
-.tempus-debug-head {
+.tempus-profiler-head {
   display: flex;
   gap: 10px;
   align-items: baseline;
@@ -85,9 +85,9 @@ const CSS = `
   cursor: grab;
   touch-action: none;
 }
-.tempus-debug.dragging { cursor: grabbing; }
-.tempus-debug.dragging .tempus-debug-head { cursor: grabbing; }
-.tempus-debug-toggle {
+.tempus-profiler.dragging { cursor: grabbing; }
+.tempus-profiler.dragging .tempus-profiler-head { cursor: grabbing; }
+.tempus-profiler-toggle {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -103,40 +103,40 @@ const CSS = `
   line-height: 1;
   cursor: pointer;
 }
-.tempus-debug-toggle:hover { background: rgba(255, 255, 255, 0.18); }
-.tempus-debug-toggle.paused { background: rgba(125, 220, 125, 0.22); color: #7ddc7d; }
-.tempus-debug-title { font-weight: 600; letter-spacing: 0.02em; }
-.tempus-debug-head .spacer { flex: 1; }
-.tempus-debug-head b { color: #fff; font-weight: 600; }
-.tempus-debug-track {
+.tempus-profiler-toggle:hover { background: rgba(255, 255, 255, 0.18); }
+.tempus-profiler-toggle.paused { background: rgba(125, 220, 125, 0.22); color: #7ddc7d; }
+.tempus-profiler-title { font-weight: 600; letter-spacing: 0.02em; }
+.tempus-profiler-head .spacer { flex: 1; }
+.tempus-profiler-head b { color: #fff; font-weight: 600; }
+.tempus-profiler-track {
   position: relative;
   height: 18px;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
-.tempus-debug-seg {
+.tempus-profiler-seg {
   position: absolute;
   top: 0;
   bottom: 0;
   min-width: 1px;
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.35);
 }
-.tempus-debug-seg.throttled {
+.tempus-profiler-seg.throttled {
   background-image: repeating-linear-gradient(
     -45deg,
     rgba(255, 255, 255, 0.18) 0 4px,
     transparent 4px 8px
   );
 }
-.tempus-debug-danger {
+.tempus-profiler-danger {
   position: absolute;
   top: 0;
   bottom: 0;
   background: rgba(255, 64, 64, 0.22);
   pointer-events: none;
 }
-.tempus-debug-budget {
+.tempus-profiler-budget {
   position: absolute;
   top: -2px;
   bottom: -2px;
@@ -145,34 +145,34 @@ const CSS = `
   box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
   pointer-events: none;
 }
-.tempus-debug-scale {
+.tempus-profiler-scale {
   display: flex;
   justify-content: space-between;
   margin: 3px 1px 8px;
   color: rgba(232, 232, 234, 0.5);
 }
-.tempus-debug-list { display: flex; flex-direction: column; gap: 3px; }
-.tempus-debug-row { display: flex; align-items: center; gap: 7px; }
-.tempus-debug-order {
+.tempus-profiler-list { display: flex; flex-direction: column; gap: 3px; }
+.tempus-profiler-row { display: flex; align-items: center; gap: 7px; }
+.tempus-profiler-order {
   flex: none;
   width: 22px;
   text-align: right;
   color: rgba(232, 232, 234, 0.45);
   font-size: 10px;
 }
-.tempus-debug-dot {
+.tempus-profiler-dot {
   width: 8px;
   height: 8px;
   border-radius: 2px;
   flex: none;
 }
-.tempus-debug-label {
+.tempus-profiler-label {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.tempus-debug-badge {
+.tempus-profiler-badge {
   flex: none;
   padding: 0 4px;
   border-radius: 3px;
@@ -180,11 +180,11 @@ const CSS = `
   color: rgba(232, 232, 234, 0.7);
   font-size: 9px;
 }
-.tempus-debug-ms { flex: none; color: #fff; }
-.tempus-debug-pct { flex: none; width: 40px; text-align: right; }
-.tempus-debug.collapsed .tempus-debug-track,
-.tempus-debug.collapsed .tempus-debug-scale,
-.tempus-debug.collapsed .tempus-debug-list { display: none; }
+.tempus-profiler-ms { flex: none; color: #fff; }
+.tempus-profiler-pct { flex: none; width: 40px; text-align: right; }
+.tempus-profiler.collapsed .tempus-profiler-track,
+.tempus-profiler.collapsed .tempus-profiler-scale,
+.tempus-profiler.collapsed .tempus-profiler-list { display: none; }
 `
 
 function injectStyle() {
@@ -218,7 +218,7 @@ function formatOrder(order: number) {
   return String(order)
 }
 
-export function debug(options: DebugOptions = {}): DebugHandle {
+export function profiler(options: ProfilerOptions = {}): ProfilerHandle {
   if (!isClient) {
     // SSR-safe no-op so callers don't have to guard.
     return { element: null as unknown as HTMLElement, destroy() {} }
@@ -231,26 +231,26 @@ export function debug(options: DebugOptions = {}): DebugHandle {
   injectStyle()
 
   const root = document.createElement('div')
-  root.className = 'tempus-debug'
+  root.className = 'tempus-profiler'
   root.style.cssText = CORNERS[corner]
   root.innerHTML = `
-    <div class="tempus-debug-head">
-      <button class="tempus-debug-toggle" data-toggle type="button"></button>
-      <span class="tempus-debug-title">tempus</span>
+    <div class="tempus-profiler-head">
+      <button class="tempus-profiler-toggle" data-toggle type="button"></button>
+      <span class="tempus-profiler-title">tempus</span>
       <span class="spacer"></span>
-      <span class="tempus-debug-stat" data-fps></span>
-      <span class="tempus-debug-stat" data-usage></span>
+      <span class="tempus-profiler-stat" data-fps></span>
+      <span class="tempus-profiler-stat" data-usage></span>
     </div>
-    <div class="tempus-debug-track" data-track></div>
-    <div class="tempus-debug-scale">
+    <div class="tempus-profiler-track" data-track></div>
+    <div class="tempus-profiler-scale">
       <span>0</span>
       <span data-budget></span>
     </div>
-    <div class="tempus-debug-list" data-list></div>
+    <div class="tempus-profiler-list" data-list></div>
   `
   container.appendChild(root)
 
-  const head = root.querySelector('.tempus-debug-head') as HTMLElement
+  const head = root.querySelector('.tempus-profiler-head') as HTMLElement
   const toggleEl = root.querySelector('[data-toggle]') as HTMLButtonElement
   const fpsEl = root.querySelector('[data-fps]') as HTMLElement
   const usageEl = root.querySelector('[data-usage]') as HTMLElement
@@ -341,7 +341,7 @@ export function debug(options: DebugOptions = {}): DebugHandle {
     const budget = Tempus.frameBudget
 
     const entries = Tempus.inspect()
-      .filter((entry) => entry.label !== DEBUG_LABEL)
+      .filter((entry) => entry.label !== PROFILER_LABEL)
       .map((entry) => {
         // Rolling average over the sample window (~1s at 60fps) rather than the
         // last frame, so the once-a-second readout stays stable instead of
@@ -377,7 +377,7 @@ export function debug(options: DebugOptions = {}): DebugHandle {
       const left = (offset / span) * 100
       const width = (e.duration / span) * 100
       offset += e.duration
-      segHTML += `<div class="tempus-debug-seg${
+      segHTML += `<div class="tempus-profiler-seg${
         e.throttled ? ' throttled' : ''
       }" style="left:${left}%;width:${width}%;background:${e.color}" title="${
         e.label
@@ -385,11 +385,11 @@ export function debug(options: DebugOptions = {}): DebugHandle {
     }
     // Over-budget region + budget marker.
     if (total > budget) {
-      segHTML += `<div class="tempus-debug-danger" style="left:${budgetLeft}%;width:${
+      segHTML += `<div class="tempus-profiler-danger" style="left:${budgetLeft}%;width:${
         100 - budgetLeft
       }%"></div>`
     }
-    segHTML += `<div class="tempus-debug-budget" style="left:${budgetLeft}%"></div>`
+    segHTML += `<div class="tempus-profiler-budget" style="left:${budgetLeft}%"></div>`
     trackEl.innerHTML = segHTML
 
     // Legend / detail list, ordered by `order` (low → high, i.e. the order
@@ -398,21 +398,21 @@ export function debug(options: DebugOptions = {}): DebugHandle {
       .sort((a, b) => a.order - b.order)
       .map((e) => {
         const pct = (e.duration / budget) * 100
-        return `<div class="tempus-debug-row">
-          <span class="tempus-debug-order" title="order ${formatOrder(
+        return `<div class="tempus-profiler-row">
+          <span class="tempus-profiler-order" title="order ${formatOrder(
             e.order
           )}">${formatOrder(e.order)}</span>
-          <span class="tempus-debug-dot" style="background:${e.color}"></span>
-          <span class="tempus-debug-label">${e.label}</span>
+          <span class="tempus-profiler-dot" style="background:${e.color}"></span>
+          <span class="tempus-profiler-label">${e.label}</span>
           ${
             e.throttled
-              ? `<span class="tempus-debug-badge">${e.fps}${
+              ? `<span class="tempus-profiler-badge">${e.fps}${
                   typeof e.fps === 'number' ? 'fps' : ''
                 }</span>`
               : ''
           }
-          <span class="tempus-debug-ms">${e.duration.toFixed(2)}ms</span>
-          <span class="tempus-debug-pct" style="color:${pctColor(pct)}">${pct.toFixed(
+          <span class="tempus-profiler-ms">${e.duration.toFixed(2)}ms</span>
+          <span class="tempus-profiler-pct" style="color:${pctColor(pct)}">${pct.toFixed(
             0
           )}%</span>
         </div>`
@@ -425,7 +425,7 @@ export function debug(options: DebugOptions = {}): DebugHandle {
   const unsubscribe = Tempus.add(render, {
     fps,
     order: Number.POSITIVE_INFINITY,
-    label: DEBUG_LABEL,
+    label: PROFILER_LABEL,
   })
 
   return {

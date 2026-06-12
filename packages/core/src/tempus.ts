@@ -46,7 +46,7 @@ function pushSample(samples: number[], duration: number) {
 }
 
 // Drop an absorbed loop's row once it hasn't run for this many frames (it
-// stopped rescheduling), so dead loops disappear from the debug view.
+// stopped rescheduling), so dead loops disappear from the profiler view.
 const PATCH_STALE_FRAMES = 120
 
 type PatchEntry = {
@@ -194,7 +194,7 @@ class TempusImpl {
   // Per-absorbed-callback timing, keyed by the callback identity so a
   // self-rescheduling loop keeps one stable row across frames. The map and
   // array hold the SAME entry objects — the array stays enumerable for the
-  // debug view, the map gives O(1) identity lookup.
+  // profiler view, the map gives O(1) identity lookup.
   private patchMeta = new WeakMap<FrameRequestCallback, PatchEntry>()
   private patchEntries: PatchEntry[] = []
   private patchAnonCount = 0
@@ -328,7 +328,7 @@ class TempusImpl {
         const frame = this.frameCount
         for (const callback of batch) {
           // Time each absorbed loop individually and attribute it to a stable
-          // row keyed by callback identity, so tempus/debug can break the
+          // row keyed by callback identity, so tempus/profiler can break the
           // single shim slot back down into per-loop cost.
           let meta = this.patchMeta.get(callback)
           if (!meta) {
@@ -396,7 +396,7 @@ class TempusImpl {
   }
 
   // Drop rows for loops that stopped rescheduling, so they fall off the
-  // debug view instead of lingering as stale 0ms entries.
+  // profiler view instead of lingering as stale 0ms entries.
   private prunePatchEntries(frame: number) {
     for (let i = this.patchEntries.length - 1; i >= 0; i--) {
       const entry = this.patchEntries[i]!
@@ -407,7 +407,7 @@ class TempusImpl {
     }
   }
 
-  // Unified timing snapshot for tempus/debug: every Tempus.add() callback and
+  // Unified timing snapshot for tempus/profiler: every Tempus.add() callback and
   // every loop absorbed by Tempus.patch(), normalized to one shape. Samples
   // are copied so consumers can't mutate live state.
   inspect(): TempusCallbackInfo[] {

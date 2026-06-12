@@ -1,5 +1,5 @@
 import Tempus from 'tempus'
-import { debug } from 'tempus/debug'
+import { profiler } from 'tempus/profiler'
 import Lottie from 'lottie-web'
 import { animate } from 'motion'
 
@@ -164,7 +164,7 @@ requestAnimationFrame(slider)
 
 // Live frame-composition overlay: a budget timeline with one ordered segment
 // per rAF, each sized to its share of the frame budget.
-debug({ corner: 'top-right' })
+profiler({ corner: 'top-right' })
 
 Tempus.add(
   ({ frame }) => {
