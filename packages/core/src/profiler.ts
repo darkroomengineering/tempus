@@ -307,7 +307,8 @@ export function profiler(options: ProfilerOptions = {}): ProfilerHandle {
     if (!dragging) return
     dragging = false
     root.classList.remove('dragging')
-    if (head.hasPointerCapture(e.pointerId)) head.releasePointerCapture(e.pointerId)
+    if (head.hasPointerCapture(e.pointerId))
+      head.releasePointerCapture(e.pointerId)
     // A press that never crossed the threshold is a tap → toggle collapse.
     if (!moved) root.classList.toggle('collapsed')
   }
@@ -323,7 +324,10 @@ export function profiler(options: ProfilerOptions = {}): ProfilerHandle {
     const playing = Tempus.isPlaying
     toggleEl.textContent = playing ? '⏸' : '▶'
     toggleEl.classList.toggle('paused', !playing)
-    toggleEl.setAttribute('aria-label', playing ? 'Stop the loop' : 'Start the loop')
+    toggleEl.setAttribute(
+      'aria-label',
+      playing ? 'Stop the loop' : 'Start the loop'
+    )
   }
   toggleEl.addEventListener('click', (e) => {
     e.stopPropagation()

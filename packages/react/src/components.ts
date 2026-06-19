@@ -1,7 +1,7 @@
 'use client'
 
-import Tempus from 'tempus'
 import { useEffect } from 'react'
+import Tempus from 'tempus'
 
 export function ReactTempus({ patch = true }: { patch?: boolean }) {
   useEffect(() => {
