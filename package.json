@@ -70,7 +70,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "tsup": "^8.3.6",
+    "tsup": "^8.5.1",
     "typescript": "^5.7.3"
   },
   "peerDependencies": {
@@ -79,6 +79,16 @@
   "peerDependenciesMeta": {
     "react": {
       "optional": true
+    }
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild": ">=0.25.0",
+      "rollup": ">=4.59.0",
+      "glob": ">=10.5.0",
+      "minimatch": ">=9.0.7",
+      "picomatch": ">=4.0.4",
+      "brace-expansion": ">=2.0.3"
     }
   }
 }
