@@ -3,6 +3,13 @@ import { profiler } from 'tempus/profiler'
 import Lottie from 'lottie-web'
 import { animate } from 'motion'
 
+// Debug-only: expose the Tempus singleton on window for console poking.
+declare global {
+  interface Window {
+    tempus: typeof Tempus
+  }
+}
+
 function isPrime(num: number) {
   if (num < 2) return false
   for (let i = 2; i * i <= num; i++) {
