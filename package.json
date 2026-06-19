@@ -71,9 +71,7 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "tsup": "^8.3.6",
-    "typescript": "^5.7.3",
-    "lottie-web": "^5.13.0",
-    "motion": "^12.40.0"
+    "typescript": "^5.7.3"
   },
   "peerDependencies": {
     "react": ">=17.0.0"
