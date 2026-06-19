@@ -3,24 +3,22 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev --host",
-    "start": "astro dev",
-    "build": "astro check && astro build",
-    "preview": "astro preview",
-    "astro": "astro"
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.9",
-    "@astrojs/react": "^4.4.2",
-    "@types/react": "^18.3.4",
-    "@types/react-dom": "^18.3.0",
-    "astro": "^5.18.2",
-    "tempus": "workspace:*",
-    "lorem-ipsum": "^2.0.8",
     "lottie-web": "^5.13.0",
     "motion": "^12.40.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "typescript": "^5.5.4"
+    "tempus": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.4",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.5.4",
+    "vite": "^6.3.5"
   }
 }

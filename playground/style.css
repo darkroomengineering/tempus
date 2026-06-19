@@ -1,0 +1,53 @@
+/* Global styles from Layout.astro */
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+/* Nav styles */
+nav {
+  position: fixed;
+  top: 2px;
+  left: 2px;
+  align-items: center;
+  border-radius: 0.5rem;
+  height: 3rem;
+  display: flex;
+  gap: 2px;
+  z-index: 1;
+}
+
+nav a {
+  width: 60px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-family: monospace;
+  text-transform: uppercase;
+  color: white;
+  background-color: #0e0e0e;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
+}
+
+nav a:hover {
+  color: #e30613;
+  border-radius: 12px;
+}

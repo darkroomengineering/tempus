@@ -1,11 +1,15 @@
 {
-  "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "jsxImportSource": "react",
-    "baseUrl": ".",
-    "paths": {
-      "~/*": ["./*"]
-    }
-  }
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["vite/client"]
+  },
+  "include": ["**/*.ts", "**/*.tsx", "vite.config.ts"],
+  "exclude": ["dist", "node_modules"]
 }
