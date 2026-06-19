@@ -27,6 +27,9 @@
     "build": "pnpm build:core && pnpm build:all",
     "build:core": "tsup --config tsup.core.ts",
     "build:all": "tsup",
+    "lint": "biome check packages",
+    "format": "biome format --write .",
+    "check": "biome check .",
     "dev": "pnpm run -w --parallel /^dev:.*/",
     "dev:build": "tsup --watch",
     "dev:playground": "pnpm --filter playground dev",
@@ -61,6 +64,9 @@
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/darkroomengineering"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

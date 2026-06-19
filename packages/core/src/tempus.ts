@@ -1,5 +1,6 @@
 // Infinity = max FPS (system default)
 
+import { version } from '../../../package.json'
 import Clock from './clock'
 import type {
   TempusCallback,
@@ -9,7 +10,6 @@ import type {
   UID,
 } from './types'
 import { getUID } from './uid'
-import { version } from '../../../package.json'
 
 const isClient = typeof window !== 'undefined'
 

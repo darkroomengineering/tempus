@@ -14,11 +14,11 @@ node_modules
 
 # production
 /build
-/docs/dist
 
 # misc
 .DS_Store
 *.pem
+*.stackdump
 
 # debug
 npm-debug.log*
@@ -34,15 +34,8 @@ yarn-error.log*
 
 # vercel
 .vercel
-.eslintcache
 
 .npmrc
 
-
-packages/core/dist/
-packages/react/dist/
-packages/snap/dist/
-packages/vue/dist/
-
-dist-new/
+# build output
 dist/
