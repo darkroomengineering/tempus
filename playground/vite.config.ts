@@ -25,6 +25,10 @@ export default defineConfig({
     host: true,
   },
   build: {
+    // Dev playground — target modern browsers and skip downleveling. Avoids
+    // esbuild lowering destructuring-with-defaults (e.g. in profiler.ts) to a
+    // legacy target, which it can't always transform.
+    target: 'esnext',
     rollupOptions: {
       input: {
         main: src('./index.html'),

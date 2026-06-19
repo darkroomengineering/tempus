@@ -8,7 +8,13 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "tempus/profiler": ["../packages/core/profiler.ts"],
+      "tempus/react": ["../packages/react/index.ts"],
+      "tempus": ["../packages/core/index.ts"]
+    }
   },
   "include": ["**/*.ts", "**/*.tsx", "vite.config.ts"],
   "exclude": ["dist", "node_modules"]
