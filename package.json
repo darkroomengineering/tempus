@@ -24,23 +24,22 @@
     "./dist/*": "./dist/*"
   },
   "scripts": {
-    "build": "pnpm build:core && pnpm build:all",
+    "build": "bun run build:core && bun run build:all",
     "build:core": "tsup --config tsup.core.ts",
     "build:all": "tsup",
     "lint": "biome check packages",
     "format": "biome format --write .",
     "check": "biome check .",
-    "dev": "pnpm run -w --parallel /^dev:.*/",
+    "dev": "bun --filter playground dev",
     "dev:build": "tsup --watch",
-    "dev:playground": "pnpm --filter playground dev",
     "readme": "node ./scripts/update-readme.js",
-    "version:dev": "npm version prerelease --preid dev --force --no-git-tag-version",
-    "version:patch": "npm version patch --force --no-git-tag-version",
-    "version:minor": "npm version minor --force --no-git-tag-version",
-    "version:major": "npm version major --force --no-git-tag-version",
-    "postversion": "pnpm build && pnpm readme",
-    "publish:main": "npm publish",
-    "publish:dev": "npm publish --tag dev"
+    "version:dev": "bun pm version prerelease --preid dev --force --no-git-tag-version",
+    "version:patch": "bun pm version patch --force --no-git-tag-version",
+    "version:minor": "bun pm version minor --force --no-git-tag-version",
+    "version:major": "bun pm version major --force --no-git-tag-version",
+    "postversion": "bun run build && bun run readme",
+    "publish:main": "bun publish",
+    "publish:dev": "bun publish --tag dev"
   },
   "files": [
     "dist"
@@ -70,7 +69,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "tsup": "^8.3.6",
+    "tsup": "^8.5.1",
     "typescript": "^5.7.3"
   },
   "peerDependencies": {
@@ -80,5 +79,9 @@
     "react": {
       "optional": true
     }
-  }
+  },
+  "workspaces": [
+    "packages/*",
+    "playground"
+  ]
 }

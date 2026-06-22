@@ -5,7 +5,10 @@
     "jsxImportSource": "react",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./*"]
+      "~/*": ["./*"],
+      "tempus/profiler": ["../packages/core/profiler.ts"],
+      "tempus/react": ["../packages/react/index.ts"],
+      "tempus": ["../packages/core/index.ts"]
     }
   }
 }
