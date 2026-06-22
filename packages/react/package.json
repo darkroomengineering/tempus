@@ -2,7 +2,7 @@
   "name": "tempus-react",
   "type": "module",
   "dependencies": {
-    "tempus": "workspace:tempus*"
+    "tempus": "workspace:*"
   },
   "devDependencies": {
     "react": "^18.2.0",
