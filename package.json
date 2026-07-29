@@ -1,6 +1,6 @@
 {
   "name": "tempus",
-  "version": "1.0.0-dev.18",
+  "version": "1.0.0",
   "description": "one rAF to rule them all",
   "type": "module",
   "sideEffects": false,
@@ -41,19 +41,12 @@
     "publish:main": "bun publish",
     "publish:dev": "bun publish --tag dev"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/darkroomengineering/tempus.git"
   },
-  "keywords": [
-    "raf",
-    "ticker",
-    "framerate",
-    "fps"
-  ],
+  "keywords": ["raf", "ticker", "framerate", "fps"],
   "author": "darkroom.engineering",
   "license": "MIT",
   "bugs": {
