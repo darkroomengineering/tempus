@@ -28,6 +28,7 @@
     "build:core": "tsup --config tsup.core.ts",
     "build:all": "tsup",
     "lint": "biome check packages",
+    "test": "bun test",
     "format": "biome format --write .",
     "check": "biome check .",
     "dev": "bun --filter playground dev",

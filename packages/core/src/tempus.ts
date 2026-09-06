@@ -2,6 +2,8 @@
 
 import { version } from '../../../package.json'
 import Clock from './clock'
+import { type Ordered, normalizeOrder, sortByOrder } from './order'
+import { type Throttled, ticks } from './throttle'
 import type {
   TempusCallback,
   TempusCallbackInfo,
@@ -56,113 +58,19 @@ type PatchEntry = {
   lastFrame: number
 }
 
-class Framerate {
-  callbacks: {
+// One Tempus.add() registration. Lives in a single list sorted by `order` /
+// `before` / `after` across every fps; `fps` only decides which frames it runs.
+type Entry = Ordered &
+  Throttled & {
     callback: TempusCallback
-    order: number
     uid: UID
-    label: string
     samples: number[]
-  }[] = []
-  fps: number | string
-  time = 0
-  lastTickDate = 0
-  framesCount = 0
-
-  constructor(fps: number | string = Number.POSITIVE_INFINITY) {
-    this.fps = fps
+    // Clock time of its last run, so throttled callbacks get the real delta.
+    lastTime?: number
   }
-
-  get isRelativeFps() {
-    // eg: '33%'
-    return typeof this.fps === 'string' && this.fps.endsWith('%')
-  }
-
-  get maxFramesCount() {
-    if (!this.isRelativeFps) return 1
-
-    // @ts-ignore
-    return Math.max(1, Math.round(100 / Number(this.fps.replace('%', ''))))
-  }
-
-  get executionTime() {
-    if (this.isRelativeFps) return 0
-
-    // @ts-ignore
-    return 1000 / this.fps
-  }
-
-  dispatch(state: TempusState) {
-    for (let i = 0; i < this.callbacks.length; i++) {
-      const duration = stopwatch(() => {
-        this.callbacks[i]?.callback(state)
-      })
-
-      pushSample(this.callbacks[i]!.samples, duration)
-    }
-  }
-
-  raf(state: TempusState) {
-    this.time += state.deltaTime
-
-    if (this.isRelativeFps) {
-      if (this.framesCount === 0) {
-        // Frame-skipped buckets report the longer delta since they last ran;
-        // override on the shared state, then restore for the other buckets.
-        const frameDelta = state.deltaTime
-        state.deltaTime = state.time - this.lastTickDate
-        this.lastTickDate = state.time
-        this.dispatch(state)
-        state.deltaTime = frameDelta
-      }
-
-      this.framesCount++
-      this.framesCount %= this.maxFramesCount
-    } else {
-      if (this.fps === Number.POSITIVE_INFINITY) {
-        this.dispatch(state)
-      } else if (this.time >= this.executionTime) {
-        this.time = this.time % this.executionTime
-
-        // Throttled buckets report the longer delta since they last ran;
-        // override on the shared state, then restore for the other buckets.
-        const frameDelta = state.deltaTime
-        state.deltaTime = state.time - this.lastTickDate
-        this.lastTickDate = state.time
-        this.dispatch(state)
-        state.deltaTime = frameDelta
-      }
-    }
-  }
-
-  add({
-    callback,
-    order,
-    label,
-  }: {
-    callback: TempusCallback
-    order: number
-    label: string
-  }) {
-    if (typeof callback !== 'function') {
-      console.warn('Tempus.add: callback is not a function')
-      return
-    }
-
-    const uid = getUID()
-    this.callbacks.push({ callback, order, uid, label, samples: [] })
-    this.callbacks.sort((a, b) => a.order - b.order)
-
-    return () => this.remove(uid)
-  }
-
-  remove(uid: UID) {
-    this.callbacks = this.callbacks.filter(({ uid: u }) => uid !== u)
-  }
-}
 
 class TempusImpl {
-  framerates: Record<number | string, Framerate> = {}
+  callbacks: Entry[] = []
   clock = new Clock()
   fps?: number
   usage = 0
@@ -191,6 +99,9 @@ class TempusImpl {
   private patchedRAF?: typeof window.requestAnimationFrame
   private patchedCancelRAF?: typeof window.cancelAnimationFrame
   private flushUnsubscribe?: () => void
+  // The shim callback that drains the rAF queue; inspect() reports the
+  // absorbed loops in its slot instead of the shim itself.
+  private flush?: TempusCallback
   // Per-absorbed-callback timing, keyed by the callback identity so a
   // self-rescheduling loop keeps one stable row across frames. The map and
   // array hold the SAME entry objects — the array stays enumerable for the
@@ -221,10 +132,9 @@ class TempusImpl {
     }
     this.frameCount = 0
 
-    for (const framerate of Object.values(this.framerates)) {
-      framerate.framesCount = 0
-      framerate.time = 0
-      framerate.lastTickDate = performance.now()
+    for (const entry of this.callbacks) {
+      entry.lastTime = undefined
+      entry.lastSlot = -1
     }
 
     this.clock.reset()
@@ -261,19 +171,45 @@ class TempusImpl {
   ) {
     if (!isClient) return
 
-    // `priority` is the deprecated alias for `order`; `order` wins when both
-    // are set, otherwise fall back through priority to the default 0.
-    const resolvedOrder = order ?? priority ?? 0
-
-    if (
-      typeof fps === 'number' ||
-      (typeof fps === 'string' && fps.endsWith('%'))
-    ) {
-      if (!this.framerates[fps]) this.framerates[fps] = new Framerate(fps)
-      return this.framerates[fps].add({ callback, order: resolvedOrder, label })
+    if (typeof callback !== 'function') {
+      console.warn('Tempus.add: callback is not a function')
+      return
     }
 
-    console.warn('Tempus.add: fps is not a number or a string ending with "%"')
+    if (
+      typeof fps !== 'number' &&
+      !(typeof fps === 'string' && fps.endsWith('%'))
+    ) {
+      console.warn(
+        'Tempus.add: fps is not a number or a string ending with "%"'
+      )
+      return
+    }
+
+    const uid = getUID()
+    // Re-resolve the whole list so a `before`/`after` naming a label that
+    // registers later still binds. `priority` is the deprecated alias for
+    // `order`; `order` wins when both are set.
+    this.callbacks = sortByOrder([
+      ...this.callbacks,
+      {
+        callback,
+        uid,
+        label,
+        fps,
+        samples: [],
+        lastSlot: -1,
+        ...normalizeOrder(order ?? priority ?? 0),
+      },
+    ])
+
+    return () => {
+      // Re-resolve: constraints that pointed at the removed label go dormant
+      // and everything settles back to its own order.
+      this.callbacks = sortByOrder(
+        this.callbacks.filter((entry) => entry.uid !== uid)
+      )
+    }
   }
 
   private raf = (browserElapsed: number) => {
@@ -292,8 +228,22 @@ class TempusImpl {
     this.state.frame = this.frameCount
 
     const duration = stopwatch(() => {
-      for (const framerate of Object.values(this.framerates)) {
-        framerate.raf(this.state)
+      for (let i = 0; i < this.callbacks.length; i++) {
+        const entry = this.callbacks[i]
+        if (!entry || !ticks(entry, elapsed, this.frameCount)) continue
+
+        // Throttled callbacks report the longer delta since they last ran;
+        // override on the shared state for this call, then restore.
+        this.state.deltaTime =
+          entry.lastTime === undefined ? deltaTime : elapsed - entry.lastTime
+        entry.lastTime = elapsed
+
+        pushSample(
+          entry.samples,
+          stopwatch(() => entry.callback(this.state))
+        )
+
+        this.state.deltaTime = deltaTime
       }
     })
 
@@ -313,51 +263,49 @@ class TempusImpl {
     // A single Tempus subscription drains the rAF queue once per frame.
     // Every patched rAF callback is absorbed — no detection, no string
     // matching, so minified/third-party/arrow/bound loops all work.
-    this.flushUnsubscribe = this.add(
-      () => {
-        if (this.rafQueue.size === 0) return
+    this.flush = () => {
+      if (this.rafQueue.size === 0) return
 
-        // Snapshot then clear: callbacks that re-register during the flush
-        // run NEXT frame, matching native one-shot rAF semantics (so a tight
-        // requestAnimationFrame(loop) doesn't recurse synchronously forever).
-        const batch = Array.from(this.rafQueue.values())
-        this.rafQueue.clear()
+      // Snapshot then clear: callbacks that re-register during the flush
+      // run NEXT frame, matching native one-shot rAF semantics (so a tight
+      // requestAnimationFrame(loop) doesn't recurse synchronously forever).
+      const batch = Array.from(this.rafQueue.values())
+      this.rafQueue.clear()
 
-        // Pass a performance.now()-comparable timestamp, as the browser does.
-        const now = performance.now()
-        const frame = this.frameCount
-        for (const callback of batch) {
-          // Time each absorbed loop individually and attribute it to a stable
-          // row keyed by callback identity, so tempus/profiler can break the
-          // single shim slot back down into per-loop cost.
-          let meta = this.patchMeta.get(callback)
-          if (!meta) {
-            meta = {
-              callback,
-              label: callback.name || `anonymous#${++this.patchAnonCount}`,
-              samples: [],
-              lastFrame: frame,
-            }
-            this.patchMeta.set(callback, meta)
-            this.patchEntries.push(meta)
+      // Pass a performance.now()-comparable timestamp, as the browser does.
+      const now = performance.now()
+      const frame = this.frameCount
+      for (const callback of batch) {
+        // Time each absorbed loop individually and attribute it to a stable
+        // row keyed by callback identity, so tempus/profiler can break the
+        // single shim slot back down into per-loop cost.
+        let meta = this.patchMeta.get(callback)
+        if (!meta) {
+          meta = {
+            callback,
+            label: callback.name || `anonymous#${++this.patchAnonCount}`,
+            samples: [],
+            lastFrame: frame,
           }
-
-          const duration = stopwatch(() => {
-            try {
-              callback(now)
-            } catch (error) {
-              console.error('Tempus.patch: rAF callback threw', error)
-            }
-          })
-
-          pushSample(meta.samples, duration)
-          meta.lastFrame = frame
+          this.patchMeta.set(callback, meta)
+          this.patchEntries.push(meta)
         }
 
-        this.prunePatchEntries(frame)
-      },
-      { label: 'tempus' }
-    )
+        const duration = stopwatch(() => {
+          try {
+            callback(now)
+          } catch (error) {
+            console.error('Tempus.patch: rAF callback threw', error)
+          }
+        })
+
+        pushSample(meta.samples, duration)
+        meta.lastFrame = frame
+      }
+
+      this.prunePatchEntries(frame)
+    }
+    this.flushUnsubscribe = this.add(this.flush, { label: 'tempus' })
 
     this.patchedRAF = ((callback: FrameRequestCallback): number => {
       const id = ++this.rafHandleId
@@ -386,6 +334,7 @@ class TempusImpl {
 
     this.flushUnsubscribe?.()
     this.flushUnsubscribe = undefined
+    this.flush = undefined
     this.rafQueue.clear()
     this.patchedRAF = undefined
     this.patchedCancelRAF = undefined
@@ -411,27 +360,36 @@ class TempusImpl {
   // every loop absorbed by Tempus.patch(), normalized to one shape. Samples
   // are copied so consumers can't mutate live state.
   inspect(): TempusCallbackInfo[] {
-    const added = Object.values(this.framerates).flatMap((framerate) =>
-      framerate.callbacks.map((callback) => ({
-        label: callback.label,
-        samples: callback.samples.slice(),
-        order: callback.order,
-        fps: framerate.fps,
-        source: 'add' as const,
-      }))
-    )
-
-    // Absorbed loops all run inside the single shim slot: every frame, never
-    // skipped, no individual order.
-    const patched = this.patchEntries.map((entry) => ({
-      label: entry.label,
-      samples: entry.samples.slice(),
-      order: 0,
-      fps: Number.POSITIVE_INFINITY,
-      source: 'patch' as const,
-    }))
-
-    return [...added, ...patched]
+    const rows: TempusCallbackInfo[] = []
+    for (const entry of this.callbacks) {
+      // Absorbed loops run inside the shim's slot, in reschedule order: list
+      // them in its place. The shim's own duration is their sum, so its row
+      // would only double count.
+      if (entry.callback === this.flush) {
+        for (const loop of this.patchEntries) {
+          rows.push({
+            label: loop.label,
+            samples: loop.samples.slice(),
+            order: entry.order,
+            before: [],
+            after: [],
+            fps: Number.POSITIVE_INFINITY,
+            source: 'patch',
+          })
+        }
+        continue
+      }
+      rows.push({
+        label: entry.label,
+        samples: entry.samples.slice(),
+        order: entry.order,
+        before: entry.before,
+        after: entry.after,
+        fps: entry.fps,
+        source: 'add',
+      })
+    }
+    return rows
   }
 }
 

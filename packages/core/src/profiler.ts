@@ -8,8 +8,8 @@
 
 // Import the published package entry (not the relative source) so this module
 // shares the ONE Tempus singleton with the host app. A relative import would
-// make tsup inline a second copy whose framerates are always empty.
-import Tempus from 'tempus'
+// make tsup inline a second copy whose callback list is always empty.
+import Tempus, { type TempusCallbackInfo } from 'tempus'
 
 export type ProfilerCorner =
   | 'top-left'
@@ -210,12 +210,20 @@ function pctColor(pct: number) {
   return '#7ddc7d'
 }
 
-// Compact, readable `order` for the legend gutter. ±Infinity (used to force a
-// callback first/last) shows as ±∞ rather than a giant number.
-function formatOrder(order: number) {
-  if (order === Number.POSITIVE_INFINITY) return '∞'
-  if (order === Number.NEGATIVE_INFINITY) return '-∞'
-  return String(order)
+// Tooltip for the legend gutter: why a callback sits where it does. Its label
+// constraints when it has any, else its numeric `order` (±Infinity as ±∞).
+function describeOrder({
+  order,
+  before,
+  after,
+}: Pick<TempusCallbackInfo, 'order' | 'before' | 'after'>) {
+  const parts: string[] = []
+  if (after.length) parts.push(`after ${after.join(', ')}`)
+  if (before.length) parts.push(`before ${before.join(', ')}`)
+  if (parts.length) return parts.join(' · ')
+  if (order === Number.POSITIVE_INFINITY) return 'order ∞'
+  if (order === Number.NEGATIVE_INFINITY) return 'order -∞'
+  return `order ${order}`
 }
 
 export function profiler(options: ProfilerOptions = {}): ProfilerHandle {
@@ -355,6 +363,8 @@ export function profiler(options: ProfilerOptions = {}): ProfilerHandle {
           label: entry.source === 'patch' ? `${entry.label} ⟳` : entry.label,
           duration,
           order: entry.order,
+          before: entry.before,
+          after: entry.after,
           throttled: entry.fps !== Number.POSITIVE_INFINITY,
           fps: entry.fps,
           color: colorFor(entry.label),
@@ -396,16 +406,16 @@ export function profiler(options: ProfilerOptions = {}): ProfilerHandle {
     segHTML += `<div class="tempus-profiler-budget" style="left:${budgetLeft}%"></div>`
     trackEl.innerHTML = segHTML
 
-    // Legend / detail list, ordered by `order` (low → high, i.e. the order
-    // callbacks run). The timeline above keeps true execution order.
-    listEl.innerHTML = [...entries]
-      .sort((a, b) => a.order - b.order)
-      .map((e) => {
+    // Legend / detail list in true execution order — inspect() is already
+    // sorted the way the frame runs, across every fps. The gutter shows each
+    // callback's position; hover it for the `order` / constraints behind it.
+    listEl.innerHTML = entries
+      .map((e, i) => {
         const pct = (e.duration / budget) * 100
         return `<div class="tempus-profiler-row">
-          <span class="tempus-profiler-order" title="order ${formatOrder(
-            e.order
-          )}">${formatOrder(e.order)}</span>
+          <span class="tempus-profiler-order" title="${describeOrder(e)}">${
+            i + 1
+          }</span>
           <span class="tempus-profiler-dot" style="background:${e.color}"></span>
           <span class="tempus-profiler-label">${e.label}</span>
           ${

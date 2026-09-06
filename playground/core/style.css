@@ -1,5 +1,36 @@
 #app {
-  position: fixed;
-  top: 200px;
-  left: 200px;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 3rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+#app h1 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+#app h2 {
+  font-size: 14px;
+  margin: 1.5rem 0 4px;
+}
+
+#app p {
+  margin: 0 0 8px;
+  color: #555;
+}
+
+#app pre {
+  background: #0e0e0e;
+  color: #e8e8ea;
+  padding: 10px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0 0 8px;
+  min-height: 1.5em;
+}
+
+#app button {
+  margin: 0 6px 6px 0;
 }

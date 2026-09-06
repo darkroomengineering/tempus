@@ -118,6 +118,26 @@ animate
 render
 ```
 
+#### Ordering by label
+
+Instead of guessing numbers, `order` can be a `{ before, after }` constraint that references other callbacks by `label` (inspired by [pmndrs/scheduler](https://github.com/pmndrs/scheduler/blob/main/docs/concepts.md)). Both accept a label or an array of labels, and a label covers every callback registered with it.
+
+```javascript
+Tempus.add(scroll, { label: 'scroll', order: -1 })
+Tempus.add(render, { label: 'render', order: 1 })
+
+// runs after every 'scroll' callback, whatever their numeric order
+Tempus.add(parallax, { order: { after: 'scroll' } })
+
+// squeezed between the two
+Tempus.add(cull, { order: { after: 'scroll', before: 'render' } })
+
+// arrays work too
+Tempus.add(setup, { order: { before: ['scroll', 'render'] } })
+```
+
+`before`/`after` are hard constraints; numeric `order` (`0` for constrained callbacks) only breaks ties between callbacks that are free to run. Constraints move the callback that declares them, never its target: `before: 'scroll'` on an order-0 callback runs it just ahead of `scroll` (order -1) rather than pushing `scroll` down past unrelated order-0 callbacks. A label that isn't registered yet is ignored until it is — order is recomputed whenever a callback is added or removed. Circular constraints log a warning; the callbacks involved fall back to their numeric order. Ordering holds across `fps`: a throttled callback keeps its place in the sequence on the frames it runs.
+
 ### Idle Pattern (frame budget)
 
 `state.budget()` returns the milliseconds left in the current frame before it exceeds the budget (`1000 / Tempus.targetFps`, default 60fps ≈ 16.67ms). It's the live equivalent of `requestIdleCallback`'s `timeRemaining()`, so you can gate optional or expensive work and avoid blocking the main thread:
@@ -191,7 +211,7 @@ const overlay = profiler({
 overlay.destroy()
 ```
 
-The panel shows live FPS and budget usage in its header, a colour-coded timeline (throttled callbacks are hatched, the over-budget region is highlighted in red), and a per-callback legend with its `order`, target FPS and average cost. Click the header to collapse it, drag it to reposition, or use the play/pause button to start and stop the whole loop. It's SSR-safe — on the server `profiler()` returns a no-op handle.
+The panel shows live FPS and budget usage in its header, a colour-coded timeline (throttled callbacks are hatched, the over-budget region is highlighted in red), and a per-callback legend in execution order, showing each callback's position, target FPS and average cost (hover the position for the `order` or `before`/`after` constraints behind it). Click the header to collapse it, drag it to reposition, or use the play/pause button to start and stop the whole loop. It's SSR-safe — on the server `profiler()` returns a no-op handle.
 
 ### Introspection
 
@@ -199,7 +219,8 @@ The panel shows live FPS and budget usage in its header, a colour-coded timeline
 
 ```javascript
 Tempus.inspect()
-// [{ label, samples, order, fps, source: 'add' | 'patch' }, ...]
+// [{ label, samples, order, before, after, fps, source: 'add' | 'patch' }, ...]
+// in execution order, across every fps
 ```
 
 ## Integration Examples
@@ -242,7 +263,7 @@ Adds an animation callback to the loop.
   - `frame`: `number` - Frame counter
   - `budget`: `() => number` - Call it for the ms left in the current frame before exceeding the budget (live)
 - **options**:
-  - `order`: `number` (default: 0) - Sort key for execution order; lower runs first (like CSS `order`)
+  - `order`: `number | { before?: string | string[], after?: string | string[] }` (default: 0) - Sort key for execution order; lower runs first (like CSS `order`), or a constraint relative to other callbacks' `label`s
   - `priority`: `number` - **Deprecated** alias for `order`
   - `fps`: `number | string` (default: Infinity) - Target frame rate. A number throttles to that absolute FPS; a string like `'50%'` runs at a fraction of the system frame rate
   - `label`: `string` - Optional name shown in `Tempus.inspect()` and the profiler overlay
@@ -278,11 +299,13 @@ Resets the clock's elapsed time to `0` and resumes the loop.
 
 ### Tempus.inspect()
 
-Returns a `TempusCallbackInfo[]` timing snapshot of every active callback (both `Tempus.add()` callbacks and loops absorbed by `patch()`):
+Returns a `TempusCallbackInfo[]` timing snapshot of every active callback (both `Tempus.add()` callbacks and loops absorbed by `patch()`), in execution order. Patched loops are listed where they actually run, in place of the internal shim that drains them:
 
 - `label`: `string`
 - `samples`: `number[]` - recent per-frame durations in ms
 - `order`: `number`
+- `before`: `string[]` - Label constraints it was registered with (empty when none)
+- `after`: `string[]`
 - `fps`: `number | string`
 - `source`: `'add' | 'patch'`
 
@@ -305,7 +328,7 @@ Restores the original native `requestAnimationFrame` and `cancelAnimationFrame`.
 
 ## Best Practices
 
-- Order callbacks deliberately: things others depend on (like scroll) should run first — give them a lower `order` (e.g. `-1`)
+- Order callbacks deliberately: things others depend on (like scroll) should run first — give them a lower `order` (e.g. `-1`), or declare the dependency with `order: { after: 'scroll' }`
 - Clean up animations when they're no longer needed
 - Consider using specific FPS for non-critical animations to improve performance (e.g: collisions)
 - Gate optional or expensive work on `state.budget()` so it yields when the frame is full

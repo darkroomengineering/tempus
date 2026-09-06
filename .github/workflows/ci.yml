@@ -18,6 +18,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run build
       - run: bun run lint
+      - run: bun run test
 
   # Builds the non-shipped Astro demo app to catch demo regressions against the
   # library's source-aliased entry points.

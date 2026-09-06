@@ -5,7 +5,7 @@
 // Concept: Tempus = tempo. One heartbeat (rAF), many instruments (callbacks),
 // kept in order (order) and in time (fps), racing one budget per frame.
 
-import Tempus, { type TempusState } from 'tempus'
+import Tempus, { type TempusOrder, type TempusState } from 'tempus'
 import { profiler } from 'tempus/profiler'
 
 // ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ let load = 0
 type Demo = {
   label: string
   feature: string
-  order?: number
+  order?: TempusOrder
   fps?: number | string
   run: (state: TempusState) => void
 }
@@ -60,9 +60,26 @@ const DEMOS: Demo[] = [
   // order: lower runs first within a frame (like CSS `order`)
   { label: 'physics', feature: 'runs first · order −1', order: -1, run: () => burn(2) },
   { label: 'render', feature: 'order 0', order: 0, run: () => burn(3) },
+  // order: { before, after }: hard constraints on other callbacks' labels. They
+  // hold across fps — particles ticks at 30fps yet always lands between
+  // physics and render on the frames it runs.
+  {
+    label: 'particles',
+    feature: 'between · physics → render · 30 fps',
+    order: { after: 'physics', before: 'render' },
+    fps: 30,
+    run: () => burn(2),
+  },
   // fps: throttle a callback to a fixed or relative rate
   { label: 'audio', feature: 'relative rate · 50%', order: 1, fps: '50%', run: () => burn(1.5) },
-  { label: 'particles', feature: 'throttled · 30 fps', order: 2, fps: 30, run: () => burn(2) },
+  // arrays: wait for every listed label. Numeric order is 0 here, yet it runs
+  // after audio (order 1) — constraints beat numbers.
+  {
+    label: 'postfx',
+    feature: 'after · render + audio',
+    order: { after: ['render', 'audio'] },
+    run: () => burn(1),
+  },
   // state.frame: do work on alternating frames (ping/pong)
   {
     label: 'ping',
