@@ -1,7 +1,7 @@
-import Tempus from 'tempus'
-import { profiler } from 'tempus/profiler'
 import Lottie from 'lottie-web'
 import { animate } from 'motion'
+import Tempus from 'tempus'
+import { profiler } from 'tempus/profiler'
 
 // Debug-only: expose the Tempus singleton on window for console poking.
 declare global {

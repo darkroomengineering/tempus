@@ -58,11 +58,28 @@ type Demo = {
 
 const DEMOS: Demo[] = [
   // order: lower runs first within a frame (like CSS `order`)
-  { label: 'physics', feature: 'runs first · order −1', order: -1, run: () => burn(2) },
+  {
+    label: 'physics',
+    feature: 'runs first · order −1',
+    order: -1,
+    run: () => burn(2),
+  },
   { label: 'render', feature: 'order 0', order: 0, run: () => burn(3) },
   // fps: throttle a callback to a fixed or relative rate
-  { label: 'audio', feature: 'relative rate · 50%', order: 1, fps: '50%', run: () => burn(1.5) },
-  { label: 'particles', feature: 'throttled · 30 fps', order: 2, fps: 30, run: () => burn(2) },
+  {
+    label: 'audio',
+    feature: 'relative rate · 50%',
+    order: 1,
+    fps: '50%',
+    run: () => burn(1.5),
+  },
+  {
+    label: 'particles',
+    feature: 'throttled · 30 fps',
+    order: 2,
+    fps: 30,
+    run: () => burn(2),
+  },
   // state.frame: do work on alternating frames (ping/pong)
   {
     label: 'ping',
@@ -141,7 +158,10 @@ function syncToggle() {
   const playing = Tempus.isPlaying
   toggleEl.textContent = playing ? 'stop' : 'start'
   toggleEl.classList.toggle('paused', !playing)
-  toggleEl.setAttribute('aria-label', playing ? 'Stop the loop' : 'Start the loop')
+  toggleEl.setAttribute(
+    'aria-label',
+    playing ? 'Stop the loop' : 'Start the loop'
+  )
 }
 toggleEl.addEventListener('click', () => {
   if (Tempus.isPlaying) Tempus.pause()

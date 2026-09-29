@@ -22,8 +22,14 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: [
-        { find: 'tempus/profiler', replacement: src('../packages/core/profiler.ts') },
-        { find: 'tempus/react', replacement: src('../packages/react/index.ts') },
+        {
+          find: 'tempus/profiler',
+          replacement: src('../packages/core/profiler.ts'),
+        },
+        {
+          find: 'tempus/react',
+          replacement: src('../packages/react/index.ts'),
+        },
         { find: 'tempus', replacement: src('../packages/core/index.ts') },
       ],
     },
