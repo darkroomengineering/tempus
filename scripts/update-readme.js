@@ -1,4 +1,4 @@
-import fs from 'fs'
+import fs from 'node:fs'
 import packageJson from '../package.json' assert { type: 'json' }
 
 const readmePath = './README.md'
@@ -12,7 +12,10 @@ function updateVersion() {
         return reject(err)
       }
 
-      const updatedReadme = data.replace(/\/lenis@([^\/]+)\//g, `/tempus@${packageJson.version}/`)
+      const updatedReadme = data.replace(
+        /\/lenis@([^\/]+)\//g,
+        `/tempus@${packageJson.version}/`
+      )
 
       fs.writeFile(readmePath, updatedReadme, 'utf8', (err) => {
         resolve()

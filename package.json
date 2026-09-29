@@ -73,10 +73,7 @@
       "optional": true
     }
   },
-  "workspaces": [
-    "packages/*",
-    "playground"
-  ],
+  "workspaces": ["packages/*", "playground"],
   "overrides": {
     "yaml": ">=2.8.3",
     "esbuild": ">=0.28.1"
