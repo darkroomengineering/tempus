@@ -61,9 +61,9 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.5.14",
     "tsup": "^8.5.1",
-    "typescript": "^5.7.3"
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
     "react": ">=17.0.0"

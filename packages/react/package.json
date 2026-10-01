@@ -5,7 +5,7 @@
     "tempus": "workspace:*"
   },
   "devDependencies": {
-    "react": "^18.2.0",
-    "@types/react": "^18.2.77"
+    "react": "^19.3.0",
+    "@types/react": "^19.3.0"
   }
 }

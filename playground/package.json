@@ -11,16 +11,16 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
-    "@astrojs/react": "^5.0.7",
-    "@types/react": "^18.3.4",
-    "@types/react-dom": "^18.3.0",
-    "astro": "^6.4.8",
+    "@astrojs/react": "^7.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "astro": "^7.3.5",
     "tempus": "workspace:*",
-    "lorem-ipsum": "^2.0.8",
+    "lorem-ipsum": "^3.0.0",
     "lottie-web": "^5.13.0",
-    "motion": "^12.40.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "typescript": "^5.5.4"
+    "motion": "^13.4.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^7.0.2"
   }
 }
